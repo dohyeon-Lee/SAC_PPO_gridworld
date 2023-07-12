@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
-from env import discrete
+from env import discrete_vision
 
 UP = 0
 RIGHT = 1
@@ -12,7 +12,7 @@ DOWN = 2
 LEFT = 3
 
 
-class GridworldEnv(discrete.DiscreteEnv):
+class GridworldEnv(discrete_vision.DiscreteEnv):
     metadata = {'render.modes': ['human', 'ansi']}
     def cal_state(self, index, MAX_X):
         return (index[1] * MAX_X) + index[0]
