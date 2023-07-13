@@ -1,9 +1,14 @@
 import gym
 import torch
 import torch.nn as nn
+import numpy as np
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
+import sys, os
+import time
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
+from env import gridworld_vision
 
 #Hyperparameters
 learning_rate = 0.0002
@@ -14,8 +19,8 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         self.data = []
         
-        self.fc1 = nn.Linear(4, 128)
-        self.fc2 = nn.Linear(128, 2)
+        self.fc1 = nn.Linear(10, 128)
+        self.fc2 = nn.Linear(128, 4)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
         
     def forward(self, x):
@@ -37,24 +42,27 @@ class Policy(nn.Module):
         self.data = []
 
 def main():
-    env = gym.make('CartPole-v1', render_mode="human")
+    env = gridworld_vision.GridworldEnv(10,10)
     pi = Policy()
     score = 0.0
     print_interval = 20
     pi.load_state_dict(torch.load(".\weights\model_state_dict.pt"))
     
-    for n_epi in range(3000):
-        s, _ = env.reset()
+    for n_epi in range(1000):
+        
+        s = env.reset()
+        s = np.delete(s, s.size-1)
         done = False
         
         while not done: # CartPole-v1 forced to terminates at 500 step.
-            env.render()
-            prob = pi(torch.from_numpy(s).float())
+            env._render()
+            time.sleep(0.1)
+            prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             m = Categorical(prob)
             a = m.sample()
-            s_prime, r, done, truncated, info = env.step(a.item())
+            s_prime, r, done, _ = env.step(a.item()) # a.item() : action의 숫자값 (0,1,2,3)
             pi.put_data((r,prob[a]))
-            s = s_prime
+            s = s = np.delete(s_prime, s_prime.size-1)
             score += r
             
         #pi.train_net()
@@ -62,6 +70,6 @@ def main():
         if n_epi%print_interval==0 and n_epi!=0:
             print("# of episode :{}, avg score : {}".format(n_epi, score/print_interval))
             score = 0.0
-    env.close()
+
 if __name__ == '__main__':
     main()

@@ -33,28 +33,28 @@ class GridworldEnv(discrete.DiscreteEnv):
         
         #### MAP MAKING ######################################
         ######################################################
-        mine_num = 0
+        mine_num = 20
         self.mine_index = np.zeros((mine_num,2))
-        # self.mine_index[0,:] = [0, 1]
-        # self.mine_index[1,:] = [1, 1]
-        # self.mine_index[2,:] = [2, 1]
-        # self.mine_index[3,:] = [2, 2]
-        # self.mine_index[4,:] = [3, 3]
-        # self.mine_index[5,:] = [4, 3]
-        # self.mine_index[6,:] = [3, 4]
-        # self.mine_index[7,:] = [6, 7]
-        # self.mine_index[8,:] = [3, 7]
-        # self.mine_index[9,:] = [9, 3]
-        # self.mine_index[10,:] = [5, 3]
-        # self.mine_index[11,:] = [1, 6]
-        # self.mine_index[12,:] = [5, 6]
-        # self.mine_index[13,:] = [7, 3]
-        # self.mine_index[14,:] = [8, 7]
-        # self.mine_index[15,:] = [2, 6]
-        # self.mine_index[16,:] = [8, 5]
-        # self.mine_index[17,:] = [8, 2]
-        # self.mine_index[18,:] = [9, 1]
-        # self.mine_index[19,:] = [6, 1]
+        self.mine_index[0,:] = [0, 1]
+        self.mine_index[1,:] = [1, 1]
+        self.mine_index[2,:] = [2, 1]
+        self.mine_index[3,:] = [2, 2]
+        self.mine_index[4,:] = [3, 3]
+        self.mine_index[5,:] = [4, 3]
+        self.mine_index[6,:] = [3, 4]
+        self.mine_index[7,:] = [6, 7]
+        self.mine_index[8,:] = [3, 7]
+        self.mine_index[9,:] = [9, 3]
+        self.mine_index[10,:] = [5, 3]
+        self.mine_index[11,:] = [1, 6]
+        self.mine_index[12,:] = [5, 6]
+        self.mine_index[13,:] = [7, 3]
+        self.mine_index[14,:] = [8, 7]
+        self.mine_index[15,:] = [2, 6]
+        self.mine_index[16,:] = [8, 5]
+        self.mine_index[17,:] = [8, 2]
+        self.mine_index[18,:] = [9, 1]
+        self.mine_index[19,:] = [6, 1]
         ######################################################
         ######################################################
 

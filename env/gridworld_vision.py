@@ -5,7 +5,6 @@ import numpy as np
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
 from env import discrete_vision
-
 UP = 0
 RIGHT = 1
 DOWN = 2
@@ -14,16 +13,33 @@ LEFT = 3
 
 class GridworldEnv(discrete_vision.DiscreteEnv):
     metadata = {'render.modes': ['human', 'ansi']}
+    
     def cal_state(self, index, MAX_X):
         return (index[1] * MAX_X) + index[0]
     
+    def mine_grid(self, mine_num, MAX_X, MAX_Y):
+        x_list = np.random.randint(low=0, high=MAX_X, size=mine_num)
+        y_list = np.random.randint(low=0, high=MAX_Y, size=mine_num)
+        x_list = np.expand_dims(x_list, axis=0)
+        y_list = np.expand_dims(y_list, axis=0)
+        list = np.append(x_list, y_list, axis=0)
+        list = list.T
+
+        mine_list = list
+        for i in range(mine_num):
+            if(list[i,0] == 0 and list[i,1] == 0):
+                mine_list = np.delete(list, i, axis = 0)
+            elif(list[i,0] == MAX_X-1 and list[i,1] == MAX_Y-1):
+                mine_list = np.delete(list, i, axis = 0)
+
+        return mine_list
     def __init__(self, max_x = 10, max_y = 10):
         
         self.MAX_Y = max_y
         self.MAX_X = max_x
         shape = [self.MAX_Y, self.MAX_X]
         self.shape = shape
-        nS = np.prod(shape)
+        nS = np.prod(shape) # num of grid position
         nA = 4
 
         Inital_index = [0, 0]
@@ -33,8 +49,11 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
         
         #### MAP MAKING ######################################
         ######################################################
-        mine_num = 0
-        self.mine_index = np.zeros((mine_num,2))
+        mine_num = 20
+        self.mine_index = self.mine_grid(mine_num, self.MAX_X, self.MAX_Y)
+        mine_num = self.mine_index.shape[0]
+        # mine_num = 20
+        # self.mine_index = np.zeros((mine_num,2))
         # self.mine_index[0,:] = [0, 1]
         # self.mine_index[1,:] = [1, 1]
         # self.mine_index[2,:] = [2, 1]
@@ -62,7 +81,7 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
         for i in range(mine_num):
             mine_state[i] = self.cal_state(self.mine_index[i],self.MAX_X)
         
-        P = {}
+        P = {} # make next state
         grid = np.arange(nS).reshape(shape)
         it = np.nditer(grid, flags=["multi_index"])
         
@@ -70,7 +89,8 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
             s = it.iterindex
             y, x = it.multi_index
             
-            P[s] = {a: [] for a in range(nA)}
+
+            P[s] = {a: [] for a in range(nA)} # 각 position state별로 가능한 action 수 (4개) 공간 만들기
             
             def is_done(state):
                 if state == Terminal_state:
@@ -80,64 +100,54 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
             
             ## reward shaping#################################################
             ##################################################################
-            reward = 0.0 if is_done(s) else -1.0
+            reward = 0 if is_done(s) else -1 # reward 0:terminate -1:moving -2:hit the wall
             ##################################################################
             ##################################################################
             
             if is_done(s):
-                P[s][UP] = [(0.5, s, reward, True), (0.5, s, reward, True)]
-                P[s][RIGHT] = [(0.5, s, reward, True), (0.5, s, reward, True)]
-                P[s][DOWN] = [(0.5, s, reward, True), (0.5, s, reward, True)]
-                P[s][LEFT] = [(0.5, s, reward, True), (0.5, s, reward, True)]
+                P[s][UP] = [1, s, reward, True]
+                P[s][RIGHT] = [1, s, reward, True]
+                P[s][DOWN] = [1, s, reward, True]
+                P[s][LEFT] = [1, s, reward, True]
             else:
-                if s in mine_state:
-                    ns_up_1 = Inital_state
-                    ns_up_2 = Inital_state
-                    ns_down_1 = Inital_state
-                    ns_down_2 = Inital_state
-                    ns_right_1 = Inital_state
-                    ns_right_2 = Inital_state
-                    ns_left_1 = Inital_state
-                    ns_left_2 = Inital_state
-                else:
-                    # 한칸씩 움직이는 경우
-                    ns_up_1 = s if y == 0 else s - self.MAX_X
-                    ns_right_1 = s if x == (self.MAX_X - 1) else s + 1
-                    ns_down_1 = s if y == (self.MAX_Y - 1) else s + self.MAX_X
-                    ns_left_1 = s if x == 0 else s - 1
-                    # 두칸씩 움직이는경우
-                    if y == 0:
-                        ns_up_2 = s
-                    elif y == 1:
-                        ns_up_2 = s - self.MAX_X
-                    else:
-                        ns_up_2 = s - self.MAX_X * 2
+                if y == 0 : # 벽이나 낭떠러지(바깥쪽) 이동하려 할 시
+                    ns_up_1 = s
+                    reward = -2
+                elif (s - self.MAX_X in mine_state) :
+                    ns_up_1 = s
+                    reward = -2
+                else : 
+                    ns_up_1 = s - self.MAX_X
+                if x == (self.MAX_X - 1) :
+                    ns_right_1 = s
+                    reward = -2
+                elif (s + 1 in mine_state) :
+                    ns_right_1 = s
+                    reward = -2 
+                else : 
+                    ns_right_1 = s + 1
+                if y == (self.MAX_Y - 1) :
+                    ns_down_1 = s
+                    reward = -2
+                elif (s + self.MAX_X in mine_state) :
+                    ns_down_1 = s
+                    reward = -2
+                else :
+                    ns_down_1 = s + self.MAX_X
+                if x == 0 :
+                    ns_left_1 = s
+                    reward = -2
+                elif (s - 1 in mine_state) :
+                    ns_left_1 = s
+                    reward = -2
+                else : 
+                    ns_left_1 = s - 1
+                    
+                P[s][UP] = [1, ns_up_1, reward, is_done(ns_up_1)]
+                P[s][RIGHT] = [1, ns_right_1, reward, is_done(ns_right_1)]
+                P[s][DOWN] = [1, ns_down_1, reward, is_done(ns_down_1)]
+                P[s][LEFT] = [1, ns_left_1, reward, is_done(ns_left_1)]
 
-                    if x == (self.MAX_X - 1):
-                        ns_right_2 = s
-                    elif x == (self.MAX_X - 2):
-                        ns_right_2 = s + 1
-                    else:
-                        ns_right_2 = s + 2
-
-                    if y == (self.MAX_Y - 1):
-                        ns_down_2 = s
-                    elif y == (self.MAX_Y - 2):
-                        ns_down_2 = s + self.MAX_X
-                    else:
-                        ns_down_2 = s + self.MAX_X * 2  
-
-                    if x == 0:
-                        ns_left_2 = s
-                    elif x == 1:
-                        ns_left_2 = s - 1
-                    else:
-                        ns_left_2 = s - 2
-                prob = 0
-                P[s][UP] = [(1 - prob / 100, ns_up_1, reward, is_done(ns_up_1)), (prob / 100, ns_up_2, reward, is_done(ns_up_2))]
-                P[s][RIGHT] = [(1 - prob / 100, ns_right_1, reward, is_done(ns_right_1)), (prob / 100, ns_right_2, reward, is_done(ns_right_2))]
-                P[s][DOWN] = [(1 - prob / 100, ns_down_1, reward, is_done(ns_down_1)), (prob / 100, ns_down_2, reward, is_done(ns_down_2))]
-                P[s][LEFT] = [(1 - prob / 100, ns_left_1, reward, is_done(ns_left_1)), (prob / 100, ns_left_2, reward, is_done(ns_left_2))]
             it.iternext()
             
         # Initial state
@@ -146,14 +156,13 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
         
         # We expose the model of the environment for educational purposes
         # This should not be used in any model-free learning algorithm
-        self.P = P
         self.Inital_index = Inital_index
         self.Terminal_index = Terminal_index
         self.Inital_state = Inital_state
         self.Terminal_state = Terminal_state
         self.mine_num = mine_num
         self.mine_state = mine_state
-        super(GridworldEnv, self).__init__(nS, nA, P, isd)
+        super(GridworldEnv, self).__init__(nS, nA, P, isd, self.MAX_X, self.MAX_Y, mine_state, Terminal_state)
 
     def _render(self, mode='human', close=False):
         """ Renders the current gridworld layout
@@ -176,7 +185,7 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
             s = it.iterindex
             y, x = it.multi_index
 
-            if self.s == s:
+            if self.s[-1] == s:
                 output = "🔴"
             elif s == self.Terminal_state:
                 output = "🟪"

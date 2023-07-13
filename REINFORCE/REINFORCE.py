@@ -21,8 +21,8 @@ class Policy(nn.Module):
         
         # self.fc1 = nn.Linear(4, 128)
         # self.fc2 = nn.Linear(128, 2)
-        self.fc1 = nn.Linear(2, 64)
-        self.fc2 = nn.Linear(64, 4)
+        self.fc1 = nn.Linear(10, 128)
+        self.fc2 = nn.Linear(128, 4)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
         
     def forward(self, x):
@@ -48,16 +48,18 @@ def main():
     env = gridworld_vision.GridworldEnv(10,10)
     pi = Policy()
     score = 0.0
-    print_interval = 20
-    for n_epi in range(1000):
-        #s, _ = env.reset()
+    print_interval = 1
+    epi_num = 11000
+    for n_epi in range(epi_num):
+
         s = env.reset()
-        s = np.array([s,1])
+        s = np.delete(s, s.size-1)
         done = False
         
         while not done: # CartPole-v1 forced to terminates at 500 step.
-            env._render()
-            time.sleep(0.1)
+            if n_epi > epi_num-2:
+                env._render()
+                time.sleep(0.1)
             #prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             m = Categorical(prob) # 4개중 하나 sampling
@@ -65,7 +67,7 @@ def main():
 
             s_prime, r, done, _ = env.step(a.item()) # a.item() : action의 숫자값 (0,1,2,3)
             pi.put_data((r,prob[a]))
-            s = np.array([s_prime,1])
+            s = s = np.delete(s_prime, s_prime.size-1)
             score += r
             
         pi.train_net()
