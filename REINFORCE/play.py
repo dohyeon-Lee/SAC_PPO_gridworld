@@ -19,13 +19,15 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         self.data = []
         
-        self.fc1 = nn.Linear(10, 128)
-        self.fc2 = nn.Linear(128, 4)
+        self.fc1 = nn.Linear(8, 128)
+        self.fc2 = nn.Linear(128, 256)
+        self.fc3 = nn.Linear(256, 4)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
         
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = F.softmax(self.fc2(x), dim=0)
+        x = F.relu(self.fc2(x))
+        x = F.softmax(self.fc3(x), dim=0)
         return x
       
     def put_data(self, item):
@@ -42,7 +44,7 @@ class Policy(nn.Module):
         self.data = []
 
 def main():
-    env = gridworld_vision.GridworldEnv(10,10)
+    env = gridworld_vision.GridworldEnv(30,30)
     pi = Policy()
     score = 0.0
     print_interval = 20

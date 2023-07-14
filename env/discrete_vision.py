@@ -44,7 +44,7 @@ class DiscreteEnv(Env):
 
         
     def __init__(self, nS, nA, P, isd, MAX_X, MAX_Y, mine_state, Terminal_state):
-        
+        self.collision = 0
         self.P = P
         self.isd = isd
         self.lastaction = 1 # None  # for rendering
@@ -83,31 +83,31 @@ class DiscreteEnv(Env):
         #############################################
         # vision state :                            #
         #                   [4]                     #
-        #                [6][1][7]                  #
+        #                   [1]                     #
         #             [3][0][s][2][5]               #
         #            before action : up             #
 
         #                   [3]                     #
-        #                   [0][6]                  #
+        #                   [0]                     #
         #                   [s][1][4]               #
-        #                   [2][7]                  #
+        #                   [2]                     #
         #                   [5]                     #
         #            before action : right          #
 
         #                   [5]                     #
-        #                [7][2]                     #
+        #                   [2]                     #
         #             [4][1][s]                     #
-        #                [6][0]                     #
+        #                   [0]                     #
         #                   [3]                     #
         #            before action : left           #
 
         #             [5][2][s][0][3]               #
-        #                [7][1][6]                  #
+        #                   [1]                     #
         #                   [4]                     #
         #            before action : down           #
         #                                           #
         #############################################                        
-        vision_state = np.zeros(8)
+        vision_state = np.zeros(6)
         x, y = self.cal_index(s)
         if lastaction == 0: # up
             
@@ -259,10 +259,10 @@ class DiscreteEnv(Env):
         return vision_state
 
     def step(self, a):
-        transitions = self.P[self.s[-1]][a]
+        transitions = self.P[self.s[-1]][a] # action 받기 이전의 state에서, action을 환경에 넣음 -> next state와 reward를 줌
         #i = categorical_sample([t[0] for t in transitions], self.np_random) # transition : [(prob1, s_prime, reward1, is_done), (prob2, s_prime, reward2, is_done)], prob1,prob2확률대로 둘 중 하나 sampling
-        #p, s, r, d = transitions[i]
-        p, s, r, d = transitions
+        #p, s, reward_label, d = transitions[i]
+        p, s, reward_label, d = transitions
         self.lastaction = a
         ## calculate state ######################################
         self.goal_direction = self.cal_goal_direction(s, self.Ternimal_state)
@@ -271,14 +271,33 @@ class DiscreteEnv(Env):
         self.s = np.append(self.state, self.vision(self.lastaction, s))
         self.s = np.append(self.s, s)
 
+
+        ### 1000~0    100000/(1+collision**2)
+        ## reward shaping #######################################
+        if d == True : 
+            reward_label[a] = 0
+        if reward_label[a] == -1:
+            r = -0.1*(self.goal_direction)**2
+            # print("moving : {}".format(r))
+        elif reward_label[a] == -2:
+            r = -20
+            self.collision += 1
+            #print("hit the wall : {}".format(r))
+        elif reward_label[a] == 0:
+            r = 1000*(self.nS/self.move_count)
+            r += 100000/(0.01+self.collision)
+            # if self.collision < 100 and self.collision >= 50:
+            #     r += 1000
+            # elif self.collision < 50 and self.collision >= 10:
+            #     r += 5000
+            # elif self.collision < 10 and self.collision >= 1:
+            #     r += 10000
+            # elif self.collision < 1:
+            #     r += 100000
+            
+            print("self collision : {}, END : {}".format(self.collision, r))
+            self.collision = 0
         ## obervation except state ##############################
         self.move_count += 1
-        ## reward shaping #######################################
-        if r == -1:
-            r = -(self.goal_direction)**2
-        elif r == -2:
-            r = -20
-        else:
-            r = self.nS/self.move_count
-    
+
         return (self.s, r, d, {"prob": p}) # self.s : 10개 state

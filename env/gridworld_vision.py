@@ -49,10 +49,10 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
         
         #### MAP MAKING ######################################
         ######################################################
-        mine_num = 20
+        mine_num = 100
         self.mine_index = self.mine_grid(mine_num, self.MAX_X, self.MAX_Y)
         mine_num = self.mine_index.shape[0]
-        # mine_num = 20
+        # mine_num = 26
         # self.mine_index = np.zeros((mine_num,2))
         # self.mine_index[0,:] = [0, 1]
         # self.mine_index[1,:] = [1, 1]
@@ -74,6 +74,12 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
         # self.mine_index[17,:] = [8, 2]
         # self.mine_index[18,:] = [9, 1]
         # self.mine_index[19,:] = [6, 1]
+        # self.mine_index[20,:] = [4, 1]
+        # self.mine_index[21,:] = [4, 2]
+        # self.mine_index[22,:] = [7, 6]
+        # self.mine_index[23,:] = [4, 9]
+        # self.mine_index[24,:] = [4, 8]
+        # self.mine_index[25,:] = [6, 9]
         ######################################################
         ######################################################
 
@@ -100,53 +106,48 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
             
             ## reward shaping#################################################
             ##################################################################
-            reward = 0 if is_done(s) else -1 # reward 0:terminate -1:moving -2:hit the wall
+            # 0번째공간 : up, 1번째공간 : right, 2번째공간 : down, 3번째공간 : left
+            reward_label = [-1,-1,-1,-1] # reward 0:terminate -1:moving -2:hit the wall
             ##################################################################
             ##################################################################
-            
-            if is_done(s):
-                P[s][UP] = [1, s, reward, True]
-                P[s][RIGHT] = [1, s, reward, True]
-                P[s][DOWN] = [1, s, reward, True]
-                P[s][LEFT] = [1, s, reward, True]
-            else:
-                if y == 0 : # 벽이나 낭떠러지(바깥쪽) 이동하려 할 시
-                    ns_up_1 = s
-                    reward = -2
-                elif (s - self.MAX_X in mine_state) :
-                    ns_up_1 = s
-                    reward = -2
-                else : 
-                    ns_up_1 = s - self.MAX_X
-                if x == (self.MAX_X - 1) :
-                    ns_right_1 = s
-                    reward = -2
-                elif (s + 1 in mine_state) :
-                    ns_right_1 = s
-                    reward = -2 
-                else : 
-                    ns_right_1 = s + 1
-                if y == (self.MAX_Y - 1) :
-                    ns_down_1 = s
-                    reward = -2
-                elif (s + self.MAX_X in mine_state) :
-                    ns_down_1 = s
-                    reward = -2
-                else :
-                    ns_down_1 = s + self.MAX_X
-                if x == 0 :
-                    ns_left_1 = s
-                    reward = -2
-                elif (s - 1 in mine_state) :
-                    ns_left_1 = s
-                    reward = -2
-                else : 
-                    ns_left_1 = s - 1
-                    
-                P[s][UP] = [1, ns_up_1, reward, is_done(ns_up_1)]
-                P[s][RIGHT] = [1, ns_right_1, reward, is_done(ns_right_1)]
-                P[s][DOWN] = [1, ns_down_1, reward, is_done(ns_down_1)]
-                P[s][LEFT] = [1, ns_left_1, reward, is_done(ns_left_1)]
+
+            if y == 0 : # 벽이나 낭떠러지(바깥쪽) 이동하려 할 시
+                ns_up_1 = s
+                reward_label[0] = -2
+            elif (s - self.MAX_X in mine_state) :
+                ns_up_1 = s
+                reward_label[0] = -2
+            else : 
+                ns_up_1 = s - self.MAX_X
+            if x == (self.MAX_X - 1) :
+                ns_right_1 = s
+                reward_label[1] = -2
+            elif (s + 1 in mine_state) :
+                ns_right_1 = s
+                reward_label[1] = -2 
+            else : 
+                ns_right_1 = s + 1
+            if y == (self.MAX_Y - 1) :
+                ns_down_1 = s
+                reward_label[2] = -2
+            elif (s + self.MAX_X in mine_state) :
+                ns_down_1 = s
+                reward_label[2] = -2
+            else :
+                ns_down_1 = s + self.MAX_X
+            if x == 0 :
+                ns_left_1 = s
+                reward_label[3] = -2
+            elif (s - 1 in mine_state) :
+                ns_left_1 = s
+                reward_label[3] = -2
+            else : 
+                ns_left_1 = s - 1
+              
+            P[s][UP] = [1, ns_up_1, reward_label, is_done(ns_up_1)]
+            P[s][RIGHT] = [1, ns_right_1, reward_label, is_done(ns_right_1)]
+            P[s][DOWN] = [1, ns_down_1, reward_label, is_done(ns_down_1)]
+            P[s][LEFT] = [1, ns_left_1, reward_label, is_done(ns_left_1)]
 
             it.iternext()
             
