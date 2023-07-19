@@ -49,37 +49,37 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
         
         #### MAP MAKING ######################################
         ######################################################
-        mine_num = 100
-        self.mine_index = self.mine_grid(mine_num, self.MAX_X, self.MAX_Y)
-        mine_num = self.mine_index.shape[0]
-        # mine_num = 26
-        # self.mine_index = np.zeros((mine_num,2))
-        # self.mine_index[0,:] = [0, 1]
-        # self.mine_index[1,:] = [1, 1]
-        # self.mine_index[2,:] = [2, 1]
-        # self.mine_index[3,:] = [2, 2]
-        # self.mine_index[4,:] = [3, 3]
-        # self.mine_index[5,:] = [4, 3]
-        # self.mine_index[6,:] = [3, 4]
-        # self.mine_index[7,:] = [6, 7]
-        # self.mine_index[8,:] = [3, 7]
-        # self.mine_index[9,:] = [9, 3]
-        # self.mine_index[10,:] = [5, 3]
-        # self.mine_index[11,:] = [1, 6]
-        # self.mine_index[12,:] = [5, 6]
-        # self.mine_index[13,:] = [7, 3]
-        # self.mine_index[14,:] = [8, 7]
-        # self.mine_index[15,:] = [2, 6]
-        # self.mine_index[16,:] = [8, 5]
-        # self.mine_index[17,:] = [8, 2]
-        # self.mine_index[18,:] = [9, 1]
-        # self.mine_index[19,:] = [6, 1]
-        # self.mine_index[20,:] = [4, 1]
-        # self.mine_index[21,:] = [4, 2]
-        # self.mine_index[22,:] = [7, 6]
-        # self.mine_index[23,:] = [4, 9]
-        # self.mine_index[24,:] = [4, 8]
-        # self.mine_index[25,:] = [6, 9]
+        # mine_num = 100
+        # self.mine_index = self.mine_grid(mine_num, self.MAX_X, self.MAX_Y)
+        # mine_num = self.mine_index.shape[0]
+        mine_num = 26
+        self.mine_index = np.zeros((mine_num,2))
+        self.mine_index[0,:] = [0, 1]
+        self.mine_index[1,:] = [1, 1]
+        self.mine_index[2,:] = [2, 1]
+        self.mine_index[3,:] = [2, 2]
+        self.mine_index[4,:] = [3, 3]
+        self.mine_index[5,:] = [4, 3]
+        self.mine_index[6,:] = [3, 4]
+        self.mine_index[7,:] = [6, 7]
+        self.mine_index[8,:] = [3, 7]
+        self.mine_index[9,:] = [9, 3]
+        self.mine_index[10,:] = [5, 3]
+        self.mine_index[11,:] = [1, 6]
+        self.mine_index[12,:] = [5, 6]
+        self.mine_index[13,:] = [7, 3]
+        self.mine_index[14,:] = [8, 7]
+        self.mine_index[15,:] = [2, 6]
+        self.mine_index[16,:] = [8, 5]
+        self.mine_index[17,:] = [8, 2]
+        self.mine_index[18,:] = [9, 1]
+        self.mine_index[19,:] = [6, 1]
+        self.mine_index[20,:] = [4, 1]
+        self.mine_index[21,:] = [4, 2]
+        self.mine_index[22,:] = [7, 6]
+        self.mine_index[23,:] = [4, 9]
+        self.mine_index[24,:] = [4, 8]
+        self.mine_index[25,:] = [6, 9]
         ######################################################
         ######################################################
 
