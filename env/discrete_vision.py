@@ -296,16 +296,21 @@ class DiscreteEnv(Env):
         self.s = np.append(self.state, self.vision(self.lastaction, s))
         self.s = np.append(self.s, s)
 
+        checkpoint = 0
         
         ### 1000~0    100000/(1+collision**2)
         ## reward shaping #######################################
         print(reward_label)
         if d == True : 
             if s == self.Terminal_state:
+                print(s)
+                print(self.Terminal_state)
                 reward_label[a] = 0
+                checkpoint = 1
             # if s == self.Ternimal_state:
             #     reward_label[a] = 0
             elif s !=  self.Terminal_state: 
+                checkpoint = -1
                 d = False
         if reward_label[a] == -1:
             r = -0.1*(self.goal_direction)**2
@@ -320,8 +325,10 @@ class DiscreteEnv(Env):
             
             print("self collision : {}, END : {}".format(self.collision, r))
             print(d)
+            print(checkpoint)
+            checkpoint = 0
             self.collision = 0
         ## obervation except state ##############################
         self.move_count += 1
-
+        
         return (self.s, r, d, {"prob": p}) # self.s : 10개 state
