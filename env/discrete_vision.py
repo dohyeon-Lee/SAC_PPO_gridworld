@@ -18,13 +18,17 @@ class DiscreteEnv(Env):
 
 
     """
-    def cal_index(self, s):
+    def cal_states(self, index):
+        return (index[1] * self.MAX_X) + index[0]
+    
+    def cal_indexs(self, s):
         x = s % self.MAX_X
         y = int(s / self.MAX_X)
         return x, y
+    
     def cal_goal_direction(self, s, terminal_s):
-        x_current, y_current = self.cal_index(s)
-        x_terminal, y_terminal = self.cal_index(terminal_s)
+        x_current, y_current = self.cal_indexs(s)
+        x_terminal, y_terminal = self.cal_indexs(terminal_s)
         goal_dir = np.arctan2((y_terminal - y_current) ,(x_terminal - x_current))
         if self.lastaction == 0 : #up
             goal_direction = goal_dir + np.pi/2
@@ -41,8 +45,25 @@ class DiscreteEnv(Env):
                 goal_direction = goal_direction + 2*np.pi
         return goal_direction
 
-
-        
+    def choose_inital_terminate_state(self):
+        index_1 = [0,0]
+        index_2 = [self.MAX_X-1, self.MAX_Y-1]
+        index_3 = [0, self.MAX_Y-1]
+        index_4 = [self.MAX_X-1, 0]
+        state_1 = self.cal_states(index_1)
+        state_2 = self.cal_states(index_2)
+        state_3 = self.cal_states(index_3)
+        state_4 = self.cal_states(index_4)
+        state = [state_1, state_2, state_3, state_4]
+        inital_state = np.random.randint(low=0, high=4)
+        terminate_state = np.random.randint(low=0, high=4)
+        while True : 
+            if inital_state == terminate_state:
+                terminate_state = np.random.randint(low=0, high=4)
+            else: 
+                break
+        return state[inital_state], state[terminate_state]
+    
     def __init__(self, nS, nA, P, isd, MAX_X, MAX_Y, mine_state, Terminal_state):
         self.collision = 0
         self.P = P
@@ -53,14 +74,14 @@ class DiscreteEnv(Env):
         self.MAX_X = MAX_X
         self.MAX_Y = MAX_Y
         self.mine_state = mine_state
-        self.Ternimal_state = Terminal_state
+        self.Terminal_state = Terminal_state
         self.action_space = spaces.Discrete(self.nA)        # 큰 의미없음
         self.observation_space = spaces.Discrete(self.nS)   # 큰 의미없음
         self.move_count = 0 # 누적 이동횟수
         self.seed()
         #self.s = categorical_sample(self.isd, self.np_random)
         s_pos = categorical_sample(self.isd, self.np_random)
-        self.goal_direction = self.cal_goal_direction(s_pos, self.Ternimal_state)
+        self.goal_direction = self.cal_goal_direction(s_pos, self.Terminal_state)
         self.state = np.array([self.lastaction, self.goal_direction])
 
         self.s = np.append(self.state, self.vision(self.lastaction, s_pos))
@@ -73,6 +94,10 @@ class DiscreteEnv(Env):
 
     def reset(self):
         #self.s = categorical_sample(self.isd, self.np_random)
+        self.isd = np.zeros(self.nS)
+        inital_state, terminal_state = self.choose_inital_terminate_state()
+        self.isd[inital_state] = 1
+        self.Terminal_state = terminal_state
         self.move_count = 0
         self.s = np.append(self.state, self.vision(self.lastaction, categorical_sample(self.isd, self.np_random)))
         self.s = np.append(self.s,categorical_sample(self.isd, self.np_random))
@@ -108,7 +133,7 @@ class DiscreteEnv(Env):
         #                                           #
         #############################################                        
         vision_state = np.zeros(6)
-        x, y = self.cal_index(s)
+        x, y = self.cal_indexs(s)
         if lastaction == 0: # up
             
             if x == 0:                                  # 0
@@ -265,17 +290,23 @@ class DiscreteEnv(Env):
         p, s, reward_label, d = transitions
         self.lastaction = a
         ## calculate state ######################################
-        self.goal_direction = self.cal_goal_direction(s, self.Ternimal_state)
+        self.goal_direction = self.cal_goal_direction(s, self.Terminal_state)
         self.state = np.array([self.lastaction, self.goal_direction])
         
         self.s = np.append(self.state, self.vision(self.lastaction, s))
         self.s = np.append(self.s, s)
 
-
+        
         ### 1000~0    100000/(1+collision**2)
         ## reward shaping #######################################
+        print(reward_label)
         if d == True : 
-            reward_label[a] = 0
+            if s == self.Terminal_state:
+                reward_label[a] = 0
+            # if s == self.Ternimal_state:
+            #     reward_label[a] = 0
+            elif s !=  self.Terminal_state: 
+                d = False
         if reward_label[a] == -1:
             r = -0.1*(self.goal_direction)**2
             # print("moving : {}".format(r))
@@ -286,16 +317,9 @@ class DiscreteEnv(Env):
         elif reward_label[a] == 0:
             r = 1000*(self.nS/self.move_count)
             r += 100000/(0.01+self.collision)
-            # if self.collision < 100 and self.collision >= 50:
-            #     r += 1000
-            # elif self.collision < 50 and self.collision >= 10:
-            #     r += 5000
-            # elif self.collision < 10 and self.collision >= 1:
-            #     r += 10000
-            # elif self.collision < 1:
-            #     r += 100000
             
             print("self collision : {}, END : {}".format(self.collision, r))
+            print(d)
             self.collision = 0
         ## obervation except state ##############################
         self.move_count += 1

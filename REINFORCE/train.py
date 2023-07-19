@@ -52,7 +52,7 @@ def main():
     pi = Policy()
     score = 0.0
     print_interval = 1
-    epi_num = 2100
+    epi_num = 1500
     for n_epi in range(epi_num):
 
         s = env.reset()
@@ -76,7 +76,7 @@ def main():
         pi.train_net()
         
         if n_epi%print_interval==0 and n_epi!=0:
-            #print("# of episode :{}, avg score : {}".format(n_epi, score/print_interval))
+            print("# of episode :{}, avg score : {}".format(n_epi, score/print_interval))
             writer.add_scalar('Loss/episode', score/print_interval, n_epi)
             score = 0.0
     writer.close()

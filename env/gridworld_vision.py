@@ -42,44 +42,53 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
         nS = np.prod(shape) # num of grid position
         nA = 4
 
+        # define inital state & final state
+        index_1 = [0,0]
+        index_2 = [self.MAX_X-1, self.MAX_Y-1]
+        index_3 = [0, self.MAX_Y-1]
+        index_4 = [self.MAX_X-1, 0]
+        state_1 = self.cal_state(index_1,self.MAX_X)
+        state_2 = self.cal_state(index_2,self.MAX_X)
+        state_3 = self.cal_state(index_3,self.MAX_X)
+        state_4 = self.cal_state(index_4,self.MAX_X)
+        state = [state_1, state_2, state_3, state_4]
         Inital_index = [0, 0]
-        Terminal_index = [self.MAX_X-1, self.MAX_Y-1]
         Inital_state = self.cal_state(Inital_index, self.MAX_X)
-        Terminal_state = self.cal_state(Terminal_index, self.MAX_X)
+        Terminal_state = state
         
         #### MAP MAKING ######################################
         ######################################################
-        mine_num = 100
-        self.mine_index = self.mine_grid(mine_num, self.MAX_X, self.MAX_Y)
-        mine_num = self.mine_index.shape[0]
-        # mine_num = 26
-        # self.mine_index = np.zeros((mine_num,2))
-        # self.mine_index[0,:] = [0, 1]
-        # self.mine_index[1,:] = [1, 1]
-        # self.mine_index[2,:] = [2, 1]
-        # self.mine_index[3,:] = [2, 2]
-        # self.mine_index[4,:] = [3, 3]
-        # self.mine_index[5,:] = [4, 3]
-        # self.mine_index[6,:] = [3, 4]
-        # self.mine_index[7,:] = [6, 7]
-        # self.mine_index[8,:] = [3, 7]
-        # self.mine_index[9,:] = [9, 3]
-        # self.mine_index[10,:] = [5, 3]
-        # self.mine_index[11,:] = [1, 6]
-        # self.mine_index[12,:] = [5, 6]
-        # self.mine_index[13,:] = [7, 3]
-        # self.mine_index[14,:] = [8, 7]
-        # self.mine_index[15,:] = [2, 6]
-        # self.mine_index[16,:] = [8, 5]
-        # self.mine_index[17,:] = [8, 2]
-        # self.mine_index[18,:] = [9, 1]
-        # self.mine_index[19,:] = [6, 1]
-        # self.mine_index[20,:] = [4, 1]
-        # self.mine_index[21,:] = [4, 2]
-        # self.mine_index[22,:] = [7, 6]
-        # self.mine_index[23,:] = [4, 9]
-        # self.mine_index[24,:] = [4, 8]
-        # self.mine_index[25,:] = [6, 9]
+        # mine_num = 100
+        # self.mine_index = self.mine_grid(mine_num, self.MAX_X, self.MAX_Y)
+        # mine_num = self.mine_index.shape[0]
+        mine_num = 26
+        self.mine_index = np.zeros((mine_num,2))
+        self.mine_index[0,:] = [0, 1]
+        self.mine_index[1,:] = [1, 1]
+        self.mine_index[2,:] = [2, 1]
+        self.mine_index[3,:] = [2, 2]
+        self.mine_index[4,:] = [3, 3]
+        self.mine_index[5,:] = [4, 3]
+        self.mine_index[6,:] = [3, 4]
+        self.mine_index[7,:] = [6, 7]
+        self.mine_index[8,:] = [3, 7]
+        self.mine_index[9,:] = [9, 3]
+        self.mine_index[10,:] = [5, 3]
+        self.mine_index[11,:] = [1, 6]
+        self.mine_index[12,:] = [5, 6]
+        self.mine_index[13,:] = [7, 3]
+        self.mine_index[14,:] = [8, 7]
+        self.mine_index[15,:] = [2, 6]
+        self.mine_index[16,:] = [8, 5]
+        self.mine_index[17,:] = [8, 2]
+        self.mine_index[18,:] = [9, 1]
+        self.mine_index[19,:] = [6, 1]
+        self.mine_index[20,:] = [4, 1]
+        self.mine_index[21,:] = [4, 2]
+        self.mine_index[22,:] = [7, 6]
+        self.mine_index[23,:] = [4, 9]
+        self.mine_index[24,:] = [4, 8]
+        self.mine_index[25,:] = [6, 9]
         ######################################################
         ######################################################
 
@@ -99,7 +108,7 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
             P[s] = {a: [] for a in range(nA)} # 각 position state별로 가능한 action 수 (4개) 공간 만들기
             
             def is_done(state):
-                if state == Terminal_state:
+                if state in Terminal_state:
                     return True
                 else:
                     return False
@@ -158,12 +167,11 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
         # We expose the model of the environment for educational purposes
         # This should not be used in any model-free learning algorithm
         self.Inital_index = Inital_index
-        self.Terminal_index = Terminal_index
         self.Inital_state = Inital_state
         self.Terminal_state = Terminal_state
         self.mine_num = mine_num
         self.mine_state = mine_state
-        super(GridworldEnv, self).__init__(nS, nA, P, isd, self.MAX_X, self.MAX_Y, mine_state, Terminal_state)
+        super(GridworldEnv, self).__init__(nS, nA, P, isd, self.MAX_X, self.MAX_Y, mine_state, Terminal_state[1])
 
     def _render(self, mode='human', close=False):
         """ Renders the current gridworld layout
@@ -188,10 +196,8 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
 
             if self.s[-1] == s:
                 output = "🔴"
-            elif s == self.Terminal_state:
+            elif s in self.Terminal_state:
                 output = "🟪"
-            elif s == self.Inital_state:
-                output = "🟩"
             elif s in self.mine_state:
                 output = "🟦"
             else:

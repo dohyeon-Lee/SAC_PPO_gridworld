@@ -44,7 +44,7 @@ class Policy(nn.Module):
         self.data = []
 
 def main():
-    env = gridworld_vision.GridworldEnv(30,30)
+    env = gridworld_vision.GridworldEnv(30,20)
     pi = Policy()
     score = 0.0
     print_interval = 20
