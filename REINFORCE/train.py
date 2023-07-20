@@ -48,7 +48,7 @@ class Policy(nn.Module):
 
 def main():
     #env = gym.make('CartPole-v1', render_mode="human")
-    env = gridworld_vision.GridworldEnv(10,10)
+    env = gridworld_vision.GridworldEnv(5,10)
     pi = Policy()
     score = 0.0
     print_interval = 1

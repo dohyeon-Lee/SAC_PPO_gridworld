@@ -95,7 +95,7 @@ class GridworldEnv(discrete_vision.DiscreteEnv):
             s = it.iterindex
             y, x = it.multi_index
             
-
+            # print("x: {}, y:{}".format(x, y))
             P[s] = {a: [] for a in range(nA)} # 각 position state별로 가능한 action 수 (4개) 공간 만들기
             
             def is_done(state):
