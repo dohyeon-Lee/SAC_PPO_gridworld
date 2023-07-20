@@ -48,7 +48,7 @@ class Policy(nn.Module):
 
 def main():
     #env = gym.make('CartPole-v1', render_mode="human")
-    env = gridworld_vision.GridworldEnv(10,10)
+    env = gridworld_vision.GridworldEnv(5,10)
     pi = Policy()
     score = 0.0
     print_interval = 1
@@ -60,9 +60,9 @@ def main():
         done = False
         
         while not done: # CartPole-v1 forced to terminates at 500 step.
-            if n_epi > epi_num-3:
-                env._render()
-                time.sleep(0.1)
+            #if n_epi > 1:
+            env._render()
+            time.sleep(0.1)
             #prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             m = Categorical(prob) # 4개중 하나 sampling

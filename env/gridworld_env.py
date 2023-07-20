@@ -2,12 +2,12 @@ from gym import Env, spaces
 from gym.utils import seeding
 from gym.envs.toy_text.utils import categorical_sample
 import numpy as np
-
+from gridworld_observation import Observation
 class DiscreteEnv(Env):
 
     def make_MAP(self, flag = "fix"):
         #####################################################
-        #### define possible inital state & final state #####
+        #### define possible inital pos & final pos #####
         if flag == "random" :
             self.MAX_X = np.random.randint(low=10,high=40)
             self.MAX_Y = np.random.randint(low=10,high=40)
@@ -19,11 +19,22 @@ class DiscreteEnv(Env):
         index_3 = [0, self.MAX_Y-1]
         index_4 = [self.MAX_X-1, 0]
         index = [index_1, index_2, index_3, index_4]
-        state_1 = self.cal_state(index_1,self.MAX_X)
-        state_2 = self.cal_state(index_2,self.MAX_X)
-        state_3 = self.cal_state(index_3,self.MAX_X)
-        state_4 = self.cal_state(index_4,self.MAX_X)
-        state = [state_1, state_2, state_3, state_4]
+        pos_1 = self.cal_pos(index_1,self.MAX_X)
+        pos_2 = self.cal_pos(index_2,self.MAX_X)
+        pos_3 = self.cal_pos(index_3,self.MAX_X)
+        pos_4 = self.cal_pos(index_4,self.MAX_X)
+        pos = [pos_1, pos_2, pos_3, pos_4]
+        #####################################################
+        #### define inital pos ############################
+        inital_pos_idx = np.random.randint(low=0, high=4)
+        terminate_pos_idx = np.random.randint(low=0, high=4)
+        while True : 
+            if inital_pos_idx == terminate_pos_idx:
+                terminate_pos_idx = np.random.randint(low=0, high=4)
+            else: 
+                break
+        self.inital_pos = pos[inital_pos_idx]
+        self.terminal_pos = pos[terminate_pos_idx]
         #####################################################
         #### MAP MAKING #####################################
         def mine_grid(self, mine_num, index):
@@ -39,46 +50,60 @@ class DiscreteEnv(Env):
                 if(list[i] in index):
                     mine_list = np.delete(list, i, axis = 0)       
             return mine_list 
+        
         if flag == "random":                
             mine_num = 100
-            self.mine_index = mine_grid(mine_num)
-            mine_num = self.mine_index.shape[0] # random으로 생성된 mine 중 시작점, 끝점과 겹치는 경우 제거
-        
-        mine_num = 26
-        self.mine_index = np.zeros((mine_num,2))
-        self.mine_index[0,:] = [0, 1]
-        self.mine_index[1,:] = [1, 1]
-        self.mine_index[2,:] = [2, 1]
-        self.mine_index[3,:] = [2, 2]
-        self.mine_index[4,:] = [3, 3]
-        self.mine_index[5,:] = [4, 3]
-        self.mine_index[6,:] = [3, 4]
-        self.mine_index[7,:] = [6, 7]
-        self.mine_index[8,:] = [3, 7]
-        self.mine_index[9,:] = [9, 3]
-        self.mine_index[10,:] = [5, 3]
-        self.mine_index[11,:] = [1, 6]
-        self.mine_index[12,:] = [5, 6]
-        self.mine_index[13,:] = [7, 3]
-        self.mine_index[14,:] = [8, 7]
-        self.mine_index[15,:] = [2, 6]
-        self.mine_index[16,:] = [8, 5]
-        self.mine_index[17,:] = [8, 2]
-        self.mine_index[18,:] = [9, 1]
-        self.mine_index[19,:] = [6, 1]
-        self.mine_index[20,:] = [4, 1]
-        self.mine_index[21,:] = [4, 2]
-        self.mine_index[22,:] = [7, 6]
-        self.mine_index[23,:] = [4, 9]
-        self.mine_index[24,:] = [4, 8]
-        self.mine_index[25,:] = [6, 9]
-        ######################################################
-        ######################################################
-
-        mine_state = np.zeros(mine_num)
+            self.mine_index = mine_grid(mine_num, index)
+            mine_num = self.mine_index.shape[0] # random으로 생성된 mine 중 시작점, 끝점과 겹치는 경우 제거했기에 mine 수 재조정
+        else : 
+            mine_num = 26
+            self.mine_index = np.zeros((mine_num,2))
+            self.mine_index[0,:] = [0, 1]
+            self.mine_index[1,:] = [1, 1]
+            self.mine_index[2,:] = [2, 1]
+            self.mine_index[3,:] = [2, 2]
+            self.mine_index[4,:] = [3, 3]
+            self.mine_index[5,:] = [4, 3]
+            self.mine_index[6,:] = [3, 4]
+            self.mine_index[7,:] = [6, 7]
+            self.mine_index[8,:] = [3, 7]
+            self.mine_index[9,:] = [9, 3]
+            self.mine_index[10,:] = [5, 3]
+            self.mine_index[11,:] = [1, 6]
+            self.mine_index[12,:] = [5, 6]
+            self.mine_index[13,:] = [7, 3]
+            self.mine_index[14,:] = [8, 7]
+            self.mine_index[15,:] = [2, 6]
+            self.mine_index[16,:] = [8, 5]
+            self.mine_index[17,:] = [8, 2]
+            self.mine_index[18,:] = [9, 1]
+            self.mine_index[19,:] = [6, 1]
+            self.mine_index[20,:] = [4, 1]
+            self.mine_index[21,:] = [4, 2]
+            self.mine_index[22,:] = [7, 6]
+            self.mine_index[23,:] = [4, 9]
+            self.mine_index[24,:] = [4, 8]
+            self.mine_index[25,:] = [6, 9]
+        self.mine_pos = np.zeros(mine_num)
         for i in range(mine_num):
-            mine_state[i] = self.cal_state(self.mine_index[i],self.MAX_X)
+            self.mine_pos[i] = self.cal_pos(self.mine_index[i],self.MAX_X)
+
+        # mapdata : inital_pos, terminal_pos, mine_pos  
+        ######################################################
+        ######################################################
         
+    def __init__(self):
+        self.obs = Observation()
+        self.reset()
+
+    def reset(self):
+        self.make_MAP("fix")
+        self.state = self.obs.reset(self.inital_pos, self.terminal_pos, self.mine_pos, self.MAX_X, self.MAX_Y)
+        self.nA = 4
+        self.npos = self.MAX_X * self.MAX_Y
+        self.pos = self.inital_pos # 현재 위치
+
+    def make_prob(self):
         P = {} # make next state
         grid = np.arange(nS).reshape(shape)
         it = np.nditer(grid, flags=["multi_index"])
@@ -142,5 +167,4 @@ class DiscreteEnv(Env):
             P[s][LEFT] = [1, ns_left_1, reward_label, is_done(ns_left_1)]
 
             it.iternext()
-    def __init__(self):
-        self.P = 
+
