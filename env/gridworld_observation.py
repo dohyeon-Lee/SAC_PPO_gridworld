@@ -12,15 +12,32 @@ class Observation():
         
         #######################################################
         #### reset state ######################################
-        self.lastaction = 0
+        self.lastaction = 1
         self.compass = self.cal_goal_direction(self.pos)
         self.vision_state = self.vision(self.pos)
-        state = [self.lastaction, self.compass]
-        state = np.append(state, self.vision_state)
-        self.state = state
+        self.vision_pos = self.vision_render(self.vision_state, self.pos)
+        # state = [self.lastaction, self.compass]
+        # state = np.append(state, self.vision_state)
+        self.state = self.vision_state
         # state : [lastaction, compass, vision]
-        return self.state
+        return self.state, self.vision_pos
 
+    def step(self,pos,lastaction):
+        self.lastaction = lastaction
+        self.pos = pos
+        self.compass = self.cal_goal_direction(self.pos)
+        self.vision_state = self.vision(self.pos)
+        self.vision_pos = self.vision_render(self.vision_state, self.pos)
+        # state = [self.lastaction, self.compass]
+        # state = np.append(state, self.vision_state)
+        self.state = self.vision_state
+        return self.state, self.vision_pos
+
+    def cal_indexs(self, s):
+        x = s % self.MAX_X
+        y = int(s / self.MAX_X)
+        return x, y
+    
     def cal_goal_direction(self, s):
         x_current, y_current = self.cal_indexs(s)
         x_terminal, y_terminal = self.cal_indexs(self.terminal_pos)
@@ -39,7 +56,65 @@ class Observation():
             else :
                 goal_direction = goal_direction + 2*np.pi
         return goal_direction
-    
+    def vision_render(self, vision_state, s):
+        vision_pos = []
+        if self.lastaction == 0:
+            if vision_state[0] == 0:
+                vision_pos = np.append(vision_pos, s-1)
+                if vision_state[3] == 0:
+                    vision_pos = np.append(vision_pos, s-2)  
+            if vision_state[1] == 0:
+                vision_pos = np.append(vision_pos, s - self.MAX_X)
+                if vision_state[4] == 0:
+                    vision_pos = np.append(vision_pos, s - 2*self.MAX_X)
+            if vision_state[2] == 0:
+                vision_pos = np.append(vision_pos, s+1)
+                if vision_state[5] == 0:
+                    vision_pos = np.append(vision_pos, s+2)
+
+        elif self.lastaction == 1:
+            if vision_state[0] == 0:
+                vision_pos = np.append(vision_pos, s - self.MAX_X)
+                if vision_state[3] == 0:
+                    vision_pos = np.append(vision_pos, s - 2*self.MAX_X)  
+            if vision_state[1] == 0:
+                vision_pos = np.append(vision_pos, s+1)
+                if vision_state[4] == 0:
+                    vision_pos = np.append(vision_pos, s+2)
+            if vision_state[2] == 0:
+                vision_pos = np.append(vision_pos, s + self.MAX_X)
+                if vision_state[5] == 0:
+                    vision_pos = np.append(vision_pos, s + 2*self.MAX_X)
+        
+        elif self.lastaction == 2:
+            if vision_state[0] == 0:
+                vision_pos = np.append(vision_pos, s+1)
+                if vision_state[3] == 0:
+                    vision_pos = np.append(vision_pos, s+2)  
+            if vision_state[1] == 0:
+                vision_pos = np.append(vision_pos, s + self.MAX_X)
+                if vision_state[4] == 0:
+                    vision_pos = np.append(vision_pos, s + 2*self.MAX_X)
+            if vision_state[2] == 0:
+                vision_pos = np.append(vision_pos, s-1)
+                if vision_state[5] == 0:
+                    vision_pos = np.append(vision_pos, s-2)
+
+        elif self.lastaction == 3:
+            if vision_state[0] == 0:
+                vision_pos = np.append(vision_pos, s + self.MAX_X)
+                if vision_state[3] == 0:
+                    vision_pos = np.append(vision_pos, s + 2*self.MAX_X)
+            if vision_state[1] == 0:
+                vision_pos = np.append(vision_pos, s-1)
+                if vision_state[4] == 0:
+                    vision_pos = np.append(vision_pos, s-2)
+            if vision_state[2] == 0:
+                vision_pos = np.append(vision_pos, s - self.MAX_X)
+                if vision_state[5] == 0:
+                    vision_pos = np.append(vision_pos, s - 2*self.MAX_X)
+        return vision_pos
+
     def vision(self, s):
         #############################################
         # vision state :                            #
@@ -74,148 +149,148 @@ class Observation():
             
             if x == 0:                                  # 0
                 vision_state[0] = 1
-            elif (s - 1 in self.mine_state):
+            elif (s - 1 in self.mine_pos):
                 vision_state[0] = 1   
             if y == 0:                                  # 1
                 vision_state[1] = 1
-            elif (s - self.MAX_X in self.mine_state): 
+            elif (s - self.MAX_X in self.mine_pos): 
                 vision_state[1] = 1
             if x == self.MAX_X - 1:                     # 2
                 vision_state[2] = 1
-            elif (s + 1 in self.mine_state): 
+            elif (s + 1 in self.mine_pos): 
                 vision_state[2] = 1
             
             if vision_state[0] == 1:                    # 3
-                vision_state[3] == 1
+                vision_state[3] = 1
             else:                       
                 if x == 1:
-                    vision_state[3] == 1
-                elif (s - 2 in self.mine_state):
-                    vision_state[3] == 1
+                    vision_state[3] = 1
+                elif (s - 2 in self.mine_pos):
+                    vision_state[3] = 1
             if vision_state[1] == 1:                    # 4
-                vision_state[4] == 1
+                vision_state[4] = 1
             else:
                 if y == 1:
-                    vision_state[4] == 1
-                elif (s - 2*self.MAX_X in self.mine_state) :
-                    vision_state[4] == 1
+                    vision_state[4] = 1
+                elif (s - 2*self.MAX_X in self.mine_pos) :
+                    vision_state[4] = 1
             if vision_state[2] == 1:                    # 5
-                vision_state[5] == 1
+                vision_state[5] = 1
             else:
                 if x == self.MAX_X - 2:
-                    vision_state[5] == 1
-                elif (s + 2 in self.mine_state) :
-                    vision_state[5] == 1
+                    vision_state[5] = 1
+                elif (s + 2 in self.mine_pos) :
+                    vision_state[5] = 1
         
         elif self.lastaction == 1: # right
             
             if y == 0:                                  # 0
                 vision_state[0] = 1
-            elif (s - self.MAX_X in self.mine_state): 
+            elif (s - self.MAX_X in self.mine_pos): 
                 vision_state[0] = 1   
             if x == self.MAX_X - 1:                     # 1
                 vision_state[1] = 1
-            elif (s + 1 in self.mine_state): 
+            elif (s + 1 in self.mine_pos): 
                 vision_state[1] = 1
             if y == (self.MAX_Y - 1):                   # 2
                 vision_state[2] = 1
-            elif (s + self.MAX_X in self.mine_state): 
+            elif (s + self.MAX_X in self.mine_pos): 
                 vision_state[2] = 1
             
             if vision_state[0] == 1:                    # 3
-                vision_state[3] == 1
+                vision_state[3] = 1
             else:
                 if y == 1:
-                    vision_state[3] == 1
-                elif (s - 2*self.MAX_X in self.mine_state) :
-                    vision_state[3] == 1
+                    vision_state[3] = 1
+                elif (s - 2*self.MAX_X in self.mine_pos) :
+                    vision_state[3] = 1
             if vision_state[1] == 1:                    # 4
-                vision_state[4] == 1
+                vision_state[4] = 1
             else:
                 if x == self.MAX_X - 2:
-                    vision_state[4] == 1
-                elif (s + 2 in self.mine_state) :
-                    vision_state[4] == 1
+                    vision_state[4] = 1
+                elif (s + 2 in self.mine_pos) :
+                    vision_state[4] = 1
             if vision_state[2] == 1:                    # 5
-                vision_state[5] == 1
+                vision_state[5] = 1
             else:
                 if y == (self.MAX_Y - 2):
-                    vision_state[5] == 1
-                elif (s + 2*self.MAX_X in self.mine_state) :
-                    vision_state[5] == 1
+                    vision_state[5] = 1
+                elif (s + 2*self.MAX_X in self.mine_pos) :
+                    vision_state[5] = 1
         
         elif self.lastaction == 3: # left
             
             if y == (self.MAX_Y - 1):                   # 0
                 vision_state[0] = 1
-            elif (s + self.MAX_X in self.mine_state): 
+            elif (s + self.MAX_X in self.mine_pos): 
                 vision_state[0] = 1
             if x == 0:                                  # 1
                 vision_state[1] = 1
-            elif (s - 1 in self.mine_state):
+            elif (s - 1 in self.mine_pos):
                 vision_state[1] = 1 
             if y == 0:                                  # 2
                 vision_state[2] = 1
-            elif (s - self.MAX_X in self.mine_state): 
+            elif (s - self.MAX_X in self.mine_pos): 
                 vision_state[2] = 1 
             
             if vision_state[0] == 1:                    # 3
-                vision_state[5] == 1
+                vision_state[5] = 1
             else:
                 if y == (self.MAX_Y - 2):
-                    vision_state[3] == 1
-                elif (s + 2*self.MAX_X in self.mine_state) :
-                    vision_state[3] == 1
+                    vision_state[3] = 1
+                elif (s + 2*self.MAX_X in self.mine_pos) :
+                    vision_state[3] = 1
             if vision_state[1] == 1:                    # 4
-                vision_state[4] == 1
+                vision_state[4] = 1
             else:                       
                 if x == 1:
-                    vision_state[4] == 1
-                elif (s - 2 in self.mine_state):
-                    vision_state[4] == 1
+                    vision_state[4] = 1
+                elif (s - 2 in self.mine_pos):
+                    vision_state[4] = 1
             if vision_state[2] == 1:                    # 5
-                vision_state[5] == 1
+                vision_state[5] = 1
             else:
                 if y == 1:
-                    vision_state[5] == 1
-                elif (s - 2*self.MAX_X in self.mine_state) :
-                    vision_state[5] == 1
+                    vision_state[5] = 1
+                elif (s - 2*self.MAX_X in self.mine_pos) :
+                    vision_state[5] = 1
         
         elif self.lastaction == 2: # down
             
             if x == 0:                                  # 2
                 vision_state[2] = 1
-            elif (s - 1 in self.mine_state):
+            elif (s - 1 in self.mine_pos):
                 vision_state[2] = 1   
             if y == (self.MAX_Y - 1):                   # 1
                 vision_state[1] = 1
-            elif (s + self.MAX_X in self.mine_state): 
+            elif (s + self.MAX_X in self.mine_pos): 
                 vision_state[1] = 1
             if x == self.MAX_X - 1:                     # 0
                 vision_state[0] = 1
-            elif (s + 1 in self.mine_state): 
+            elif (s + 1 in self.mine_pos): 
                 vision_state[0] = 1
             
             if vision_state[2] == 1:                    # 5
-                vision_state[5] == 1
+                vision_state[5] = 1
             else:                       
                 if x == 1:
-                    vision_state[5] == 1
-                elif (s - 2 in self.mine_state):
-                    vision_state[5] == 1
+                    vision_state[5] = 1
+                elif (s - 2 in self.mine_pos):
+                    vision_state[5] = 1
             if vision_state[1] == 1:                    # 4
-                vision_state[4] == 1
+                vision_state[4] = 1
             else:
                 if y == (self.MAX_Y - 2):
-                    vision_state[4] == 1
-                elif (s + 2*self.MAX_X in self.mine_state) :
-                    vision_state[4] == 1
+                    vision_state[4] = 1
+                elif (s + 2*self.MAX_X in self.mine_pos) :
+                    vision_state[4] = 1
             if vision_state[0] == 1:                    # 3
-                vision_state[3] == 1
+                vision_state[3] = 1
             else:
                 if x == self.MAX_X - 2:
-                    vision_state[3] == 1
-                elif (s + 2 in self.mine_state) :
-                    vision_state[3] == 1
+                    vision_state[3] = 1
+                elif (s + 2 in self.mine_pos) :
+                    vision_state[3] = 1
         return vision_state
 
