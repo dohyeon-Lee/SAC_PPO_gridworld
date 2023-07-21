@@ -16,9 +16,9 @@ class Observation():
         self.compass = self.cal_goal_direction(self.pos)
         self.vision_state = self.vision(self.pos)
         self.vision_pos = self.vision_render(self.vision_state, self.pos)
-        # state = [self.lastaction, self.compass]
-        # state = np.append(state, self.vision_state)
-        self.state = self.vision_state
+        distance = self.cal_distance(self.pos)
+        state = np.append(distance, self.vision_state)
+        self.state = state
         # state : [lastaction, compass, vision]
         return self.state, self.vision_pos
 
@@ -28,10 +28,18 @@ class Observation():
         self.compass = self.cal_goal_direction(self.pos)
         self.vision_state = self.vision(self.pos)
         self.vision_pos = self.vision_render(self.vision_state, self.pos)
-        # state = [self.lastaction, self.compass]
-        # state = np.append(state, self.vision_state)
-        self.state = self.vision_state
+        distance = self.cal_distance(self.pos)
+        state = np.append(distance, self.vision_state)
+        self.state = state
         return self.state, self.vision_pos
+
+    def cal_distance(self, s):
+        x_t, y_t = self.cal_indexs(self.terminal_pos)
+        x_s, y_s = self.cal_indexs(s)
+        dx = x_t - x_s
+        dy = y_t - y_s
+        distance = np.sqrt(dx**2 + dy**2)
+        return distance
 
     def cal_indexs(self, s):
         x = s % self.MAX_X
@@ -56,6 +64,7 @@ class Observation():
             else :
                 goal_direction = goal_direction + 2*np.pi
         return goal_direction
+    
     def vision_render(self, vision_state, s):
         vision_pos = []
         if self.lastaction == 0:

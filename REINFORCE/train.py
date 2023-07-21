@@ -12,7 +12,7 @@ from env import gridworld_env
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 #Hyperparameters
-learning_rate = 0.0002
+learning_rate = 0.001
 gamma         = 0.98
 
 class Policy(nn.Module):
@@ -22,7 +22,7 @@ class Policy(nn.Module):
         
         # self.fc1 = nn.Linear(4, 128)
         # self.fc2 = nn.Linear(128, 2)
-        self.fc1 = nn.Linear(6, 128)
+        self.fc1 = nn.Linear(7, 128)
         self.fc2 = nn.Linear(128,128)
         self.fc3 = nn.Linear(128, 4)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
@@ -52,16 +52,16 @@ def main():
     pi = Policy()
     score = 0.0
     print_interval = 1
-    epi_num = 1500
+    epi_num = 10000
     for n_epi in range(epi_num):
 
         s = env.reset(flag)
         done = False
         
         while not done:
-            if n_epi > epi_num-10:
+            if n_epi > epi_num-10 :#epi_num-10:
                 env._render()
-                time.sleep(0.7)
+                time.sleep(0.1)
             prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             m = Categorical(prob) # 4개중 하나 sampling
             a = m.sample() # a : sampling 된 action

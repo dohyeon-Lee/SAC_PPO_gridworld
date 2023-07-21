@@ -8,10 +8,10 @@ from torch.distributions import Categorical
 import sys, os
 import time
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
-from env import gridworld_vision
+from env import gridworld_env
 
 #Hyperparameters
-learning_rate = 0.0002
+learning_rate = 0.001
 gamma         = 0.98
 
 class Policy(nn.Module):
@@ -19,9 +19,11 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         self.data = []
         
-        self.fc1 = nn.Linear(8, 128)
-        self.fc2 = nn.Linear(128, 256)
-        self.fc3 = nn.Linear(256, 4)
+        # self.fc1 = nn.Linear(4, 128)
+        # self.fc2 = nn.Linear(128, 2)
+        self.fc1 = nn.Linear(7, 128)
+        self.fc2 = nn.Linear(128,128)
+        self.fc3 = nn.Linear(128, 4)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
         
     def forward(self, x):
@@ -44,16 +46,17 @@ class Policy(nn.Module):
         self.data = []
 
 def main():
-    env = gridworld_vision.GridworldEnv(30,20)
-    pi = Policy()
+    flag = "fix" # "fix":training  "random":playing 
+    env = gridworld_env.GridworldEnv(flag)
+    pi = torch.load(".\weights\model.pt")
+    #pi = Policy()
     score = 0.0
     print_interval = 20
-    pi.load_state_dict(torch.load(".\weights\model_state_dict.pt"))
+    #pi.load_state_dict(torch.load(".\weights\model_state_dict.pt"))
     
     for n_epi in range(1000):
         
-        s = env.reset()
-        s = np.delete(s, s.size-1)
+        s = env.reset(flag)
         done = False
         
         while not done: # CartPole-v1 forced to terminates at 500 step.
@@ -62,12 +65,9 @@ def main():
             prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             m = Categorical(prob)
             a = m.sample()
-            s_prime, r, done, _ = env.step(a.item()) # a.item() : action의 숫자값 (0,1,2,3)
-            pi.put_data((r,prob[a]))
-            s = s = np.delete(s_prime, s_prime.size-1)
+            s_prime, r, done = env.step(a.item()) # a.item() : action의 숫자값 (0,1,2,3)
+            s = s_prime
             score += r
-            
-        #pi.train_net()
         
         if n_epi%print_interval==0 and n_epi!=0:
             print("# of episode :{}, avg score : {}".format(n_epi, score/print_interval))

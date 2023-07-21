@@ -38,21 +38,23 @@ class GridworldEnv(Env):
         #### make reward ###############################################
         reward = 0
         if d == True : 
-            reward = 1000*(self.npos/self.move_count)
-            reward += 100000/(0.01+self.collision)
-            print("# of hit wall : {}".format(self.collision))
+            #reward = 1000*(self.npos/self.move_count)
+            collision_reward = 10000 - self.collision #10000/(0.01+self.collision)
+            reward = collision_reward
+            print("# of hit wall : {}, self collision reward : {} ".format(self.collision, collision_reward))
             self.collision = 0
             self.move_count = 0
         elif agent_condition[a] == -1 : #move
-            reward = -0.1
-            # compass = self.state[1]
-            # reward = -0.01*(compass)**2
+            distance = self.state[0]
+            reward = -(distance)
+            #print("distance : {}, reward : {}".format(distance, reward))
         elif agent_condition[a] == -2 : #hit wall
-            reward = -2
+            distance = self.state[0]
+            reward = -(self.MAX_X**2 + self.MAX_Y**2)-(distance)
             self.collision += 1            
         self.move_count += 1
 
-        return (self.state, reward, d)
+        return (self.state, reward*0.01, d)
 
     def _render(self, mode='human', close=False):
 
@@ -126,7 +128,7 @@ class GridworldEnv(Env):
         inital_pos_idx = np.random.randint(low=0, high=2)
         terminate_pos_idx = np.random.randint(low=0, high=2)
         
-        setnum = np.random.randint(low=0, high=1)
+        setnum = np.random.randint(low=0, high=2)
         
         while True : 
             if inital_pos_idx == terminate_pos_idx:
@@ -158,18 +160,14 @@ class GridworldEnv(Env):
             self.mine_index = mine_grid(mine_num, index)
             mine_num = self.mine_index.shape[0] # random으로 생성된 mine 중 시작점, 끝점과 겹치는 경우 제거했기에 mine 수 재조정
         else : 
-            mine_num = 10
+            mine_num = 6
             self.mine_index = np.zeros((mine_num,2))
-            # self.mine_index[0,:] = [1, 2]
-            # #self.mine_index[1,:] = [3, 1]
-            # self.mine_index[2,:] = [1, 4]
-            # #self.mine_index[3,:] = [0, 2]
-            # self.mine_index[4,:] = [0, 4]
-            # self.mine_index[5,:] = [3, 0]
-            # #self.mine_index[6,:] = [2, 3]
-            # #self.mine_index[7,:] = [2, 4]
-            # self.mine_index[8,:] = [2, 2]
-            # self.mine_index[9,:] = [4, 3]
+            self.mine_index[0,:] = [1, 2]
+            self.mine_index[1,:] = [1, 4]
+            self.mine_index[2,:] = [0, 4]
+            self.mine_index[3,:] = [3, 0]
+            self.mine_index[4,:] = [2, 2]
+            self.mine_index[5,:] = [4, 3]
       
             # self.mine_index[0,:] = [0, 1]
             # self.mine_index[1,:] = [1, 1]
