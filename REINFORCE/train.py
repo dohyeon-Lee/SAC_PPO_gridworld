@@ -50,9 +50,15 @@ def main():
     flag = "fix" # "fix":training  "random":playing 
     env = gridworld_env.GridworldEnv(flag)
     pi = Policy()
+    
+    arguments = sys.argv
+    if len(arguments) > 1:
+        if sys.argv[1] == "continue":
+            pi.load_state_dict(torch.load(".\weights\model_state_dict.pt"))
+    
     score = 0.0
     print_interval = 1
-    epi_num = 10000
+    epi_num = 3000
     for n_epi in range(epi_num):
 
         s = env.reset(flag)
@@ -78,8 +84,8 @@ def main():
             writer.add_scalar('return/episode', score/print_interval, n_epi)
             score = 0.0
     writer.close()
-    torch.save(pi.state_dict(), ".\weights\model_state_dict.pt")
-    torch.save(pi, ".\weights\model.pt")
+    torch.save(pi.state_dict(), ".\weights\model_state_dict_2.pt")
+    torch.save(pi, ".\weights\model_2.pt")
 
 
 if __name__ == '__main__':
