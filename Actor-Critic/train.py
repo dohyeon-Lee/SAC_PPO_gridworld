@@ -1,16 +1,17 @@
 import gym
 import torch
 import torch.nn as nn
+import numpy as np
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
-import numpy as np
 import sys, os
 import time
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
-from env import gridworld_vision
+from env import gridworld_env
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
+
 #Hyperparameters
 learning_rate = 0.0002
 gamma         = 0.98
@@ -21,7 +22,7 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
         self.data = []
         
-        self.fc1 = nn.Linear(8,256)
+        self.fc1 = nn.Linear(7,256)
         self.fc_pi = nn.Linear(256,4)
         self.fc_v = nn.Linear(256,1)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
@@ -71,26 +72,28 @@ class ActorCritic(nn.Module):
         self.optimizer.step()         
       
 def main():  
-    #env = gym.make('CartPole-v1', render_mode="human")
-    env = gridworld_vision.GridworldEnv(10,10)
-    model = ActorCritic()    
+    flag = "fix" # "fix":training  "random":playing 
+    env = gridworld_env.GridworldEnv(flag)
+    model = ActorCritic()  
+    arguments = sys.argv
+    if len(arguments) > 1:
+        if sys.argv[1] == "continue":
+            model.load_state_dict(torch.load(".\weights\model_state_dict.pt"))  
     print_interval = 1
     score = 0.0
-    epi_num = 10000
+    epi_num = 20000
     for n_epi in range(epi_num):
         done = False
-        s = env.reset()
-        s = np.delete(s, s.size-1)
+        s = env.reset(flag)
         while not done:
-            if n_epi > epi_num-3:
+            if n_epi > epi_num - 10:
                 env._render()
                 time.sleep(0.1)
             for t in range(n_rollout):
-                prob = model.pi(torch.from_numpy(s).float()) 
+                prob = model.pi(torch.from_numpy(s).float())
                 m = Categorical(prob)
                 a = m.sample().item()
-                s_prime, r, done, _ = env.step(a)
-                s_prime = np.delete(s_prime, s_prime.size-1)
+                s_prime, r, done = env.step(a)
                 model.put_data((s,a,r,s_prime,done))
                 
                 s = s_prime
@@ -103,7 +106,7 @@ def main():
             
         if n_epi%print_interval==0 and n_epi!=0:
             print("# of episode :{}, avg score : {:.1f}".format(n_epi, score/print_interval))
-            writer.add_scalar('Loss/episode', score/print_interval, n_epi)
+            writer.add_scalar('return/episode', score/print_interval, n_epi)
             score = 0.0
     writer.close()
     torch.save(model.state_dict(), ".\weights\model_state_dict.pt")

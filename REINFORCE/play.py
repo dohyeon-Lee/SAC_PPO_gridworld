@@ -48,7 +48,7 @@ class Policy(nn.Module):
 def main():
     flag = "fix" # "fix":training  "random":playing 
     env = gridworld_env.GridworldEnv(flag)
-    pi = torch.load(".\weights\model.pt")
+    pi = torch.load(".\weights\model_2.pt")
     #pi = Policy()
     score = 0.0
     print_interval = 20

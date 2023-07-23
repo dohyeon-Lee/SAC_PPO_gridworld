@@ -160,14 +160,13 @@ class GridworldEnv(Env):
             self.mine_index = mine_grid(mine_num, index)
             mine_num = self.mine_index.shape[0] # random으로 생성된 mine 중 시작점, 끝점과 겹치는 경우 제거했기에 mine 수 재조정
         else : 
-            mine_num = 0
+            mine_num = 5
             self.mine_index = np.zeros((mine_num,2))
-            # self.mine_index[0,:] = [1, 2]
-            # self.mine_index[1,:] = [1, 4]
-            # self.mine_index[2,:] = [0, 4]
-            # self.mine_index[3,:] = [3, 0]
-            # self.mine_index[4,:] = [2, 2]
-            # self.mine_index[5,:] = [4, 3]
+            self.mine_index[0,:] = [1, 2]
+            self.mine_index[1,:] = [1, 4]
+            self.mine_index[2,:] = [3, 0]
+            self.mine_index[3,:] = [2, 2]
+            self.mine_index[4,:] = [4, 3]
       
             # self.mine_index[0,:] = [0, 1]
             # self.mine_index[1,:] = [1, 1]
