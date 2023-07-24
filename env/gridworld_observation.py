@@ -16,7 +16,7 @@ class Observation():
         self.compass = self.cal_goal_direction(self.pos)
         self.vision_state = self.vision(self.pos)
         self.vision_pos = self.vision_render(self.vision_state, self.pos)
-        distance = self.cal_distance(self.pos)
+        distance = self.cal_distance(self.pos) / np.sqrt(self.MAX_X**2 + self.MAX_Y**2) # consider map size
         state = np.append(distance, self.vision_state)
         self.state = state
         # state : [lastaction, compass, vision]
@@ -28,7 +28,7 @@ class Observation():
         self.compass = self.cal_goal_direction(self.pos)
         self.vision_state = self.vision(self.pos)
         self.vision_pos = self.vision_render(self.vision_state, self.pos)
-        distance = self.cal_distance(self.pos)
+        distance = self.cal_distance(self.pos) / np.sqrt(self.MAX_X**2 + self.MAX_Y**2) # consider map size
         state = np.append(distance, self.vision_state)
         self.state = state
         return self.state, self.vision_pos

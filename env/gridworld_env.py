@@ -46,7 +46,7 @@ class GridworldEnv(Env):
             self.move_count = 0
         elif agent_condition[a] == -1 : #move
             distance = self.state[0]
-            reward = -(distance)
+            reward = -(distance)*10
             #print("distance : {}, reward : {}".format(distance, reward))
         elif agent_condition[a] == -2 : #hit wall
             distance = self.state[0]
