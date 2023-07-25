@@ -91,7 +91,7 @@ class PPO(nn.Module):
             self.optimizer.step()
         
 def main():
-    flag = "random" # "fix":training  "random":playing 
+    flag = "fix" # "fix":training  "random":playing 
     env = gridworld_env.GridworldEnv(flag)
     model = torch.load(".\weights\model.pt") 
     print_interval = 1
