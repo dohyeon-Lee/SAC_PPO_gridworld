@@ -250,7 +250,7 @@ class Observation():
                 vision_state[2] = 1 
             
             if vision_state[0] == 1:                    # 3
-                vision_state[5] = 1
+                vision_state[3] = 1
             else:
                 if y == (self.MAX_Y - 2):
                     vision_state[3] = 1
