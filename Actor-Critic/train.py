@@ -13,7 +13,8 @@ from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 
 #Hyperparameters
-learning_rate = 0.0002
+# learning_rate = 0.0002
+learning_rate = 0.00002
 gamma         = 0.98
 n_rollout     = 10
 
@@ -22,7 +23,7 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
         self.data = []
         
-        self.fc1 = nn.Linear(7,256)
+        self.fc1 = nn.Linear(8,256)
         self.fc_pi = nn.Linear(256,4)
         self.fc_v = nn.Linear(256,1)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)

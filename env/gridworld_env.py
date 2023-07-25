@@ -45,12 +45,15 @@ class GridworldEnv(Env):
             self.collision = 0
             self.move_count = 0
         elif agent_condition[a] == -1 : #move
-            distance = self.state[0]
-            reward = -(distance)*10
+            dx = self.state[0]
+            dy = self.state[1]
+            reward = -np.abs(dx)-np.abs(dy)
             #print("distance : {}, reward : {}".format(distance, reward))
         elif agent_condition[a] == -2 : #hit wall
-            distance = self.state[0]
-            reward = -(self.MAX_X**2 + self.MAX_Y**2)-(distance)
+            dx = self.state[0]
+            dy = self.state[1]
+            reward = -np.abs(dx)-np.abs(dy)
+            reward += -10
             self.collision += 1            
         self.move_count += 1
 
@@ -109,8 +112,8 @@ class GridworldEnv(Env):
             self.MAX_X = np.random.randint(low=10,high=40)
             self.MAX_Y = np.random.randint(low=10,high=40)
         else :
-            self.MAX_X = 5
-            self.MAX_Y = 5
+            self.MAX_X = 10
+            self.MAX_Y = 10
         index_1 = [0,0]
         index_2 = [self.MAX_X-1, self.MAX_Y-1]
         index_3 = [0, self.MAX_Y-1]
@@ -160,13 +163,13 @@ class GridworldEnv(Env):
             self.mine_index = mine_grid(mine_num, index)
             mine_num = self.mine_index.shape[0] # random으로 생성된 mine 중 시작점, 끝점과 겹치는 경우 제거했기에 mine 수 재조정
         else : 
-            mine_num = 5
+            mine_num = 36
             self.mine_index = np.zeros((mine_num,2))
-            self.mine_index[0,:] = [1, 2]
-            self.mine_index[1,:] = [1, 4]
-            self.mine_index[2,:] = [3, 0]
-            self.mine_index[3,:] = [2, 2]
-            self.mine_index[4,:] = [4, 3]
+            # self.mine_index[0,:] = [1, 2]
+            # self.mine_index[1,:] = [1, 4]
+            # self.mine_index[2,:] = [3, 0]
+            # self.mine_index[3,:] = [2, 2]
+            # self.mine_index[4,:] = [4, 3]
       
             # self.mine_index[0,:] = [0, 1]
             # self.mine_index[1,:] = [1, 1]
@@ -194,6 +197,45 @@ class GridworldEnv(Env):
             # self.mine_index[23,:] = [4, 9]
             # self.mine_index[24,:] = [4, 8]
             # self.mine_index[25,:] = [6, 9]
+
+            self.mine_index[0,:] = [1, 2] #
+            self.mine_index[1,:] = [1, 2]
+            self.mine_index[2,:] = [2, 1]
+            self.mine_index[3,:] = [2, 1] #
+            self.mine_index[4,:] = [4, 1]
+            self.mine_index[5,:] = [4, 2]
+            self.mine_index[6,:] = [5, 1]
+            self.mine_index[7,:] = [5, 2]
+            self.mine_index[8,:] = [7, 1]
+            self.mine_index[9,:] = [8, 2] #
+            self.mine_index[10,:] = [8, 2] #
+            self.mine_index[11,:] = [8, 2]
+            self.mine_index[12,:] = [1, 4]
+            self.mine_index[13,:] = [1, 5]
+            self.mine_index[14,:] = [2, 4]
+            self.mine_index[15,:] = [2, 5]
+            self.mine_index[16,:] = [4, 4]
+            self.mine_index[17,:] = [4, 5]
+            self.mine_index[18,:] = [5, 4]
+            self.mine_index[19,:] = [5, 5]
+            self.mine_index[20,:] = [7, 4]
+            self.mine_index[21,:] = [7, 5]
+            self.mine_index[22,:] = [8, 4]
+            self.mine_index[23,:] = [8, 5]
+            self.mine_index[24,:] = [1, 7]
+            self.mine_index[25,:] = [1, 7] #
+            self.mine_index[26,:] = [2, 8] #
+            self.mine_index[27,:] = [2, 8]
+            self.mine_index[28,:] = [4, 7]
+            self.mine_index[29,:] = [4, 8]
+            self.mine_index[30,:] = [5, 7]
+            self.mine_index[31,:] = [5, 8]
+            self.mine_index[32,:] = [7, 8] # 
+            self.mine_index[33,:] = [7, 8]
+            self.mine_index[34,:] = [8, 7]
+            self.mine_index[35,:] = [8, 7] #
+
+
         self.mine_pos = np.zeros(mine_num)
         for i in range(mine_num):
             self.mine_pos[i] = self.cal_pos(self.mine_index[i],self.MAX_X)

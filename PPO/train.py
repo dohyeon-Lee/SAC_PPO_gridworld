@@ -1,12 +1,19 @@
 import gym
 import torch
 import torch.nn as nn
+import numpy as np
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
+import sys, os
+import time
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
+from env import gridworld_env
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter()
 
 #Hyperparameters
-learning_rate = 0.0005
+learning_rate = 0.00002
 gamma         = 0.98
 lmbda         = 0.95
 eps_clip      = 0.1
@@ -18,8 +25,8 @@ class PPO(nn.Module):
         super(PPO, self).__init__()
         self.data = []
         
-        self.fc1   = nn.Linear(4,256)
-        self.fc_pi = nn.Linear(256,2)
+        self.fc1   = nn.Linear(8,256)
+        self.fc_pi = nn.Linear(256,4)
         self.fc_v  = nn.Linear(256,1)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
@@ -66,6 +73,7 @@ class PPO(nn.Module):
 
             advantage_lst = []
             advantage = 0.0
+            
             for delta_t in delta[::-1]:
                 advantage = gamma * lmbda * advantage + delta_t[0]
                 advantage_lst.append([advantage])
@@ -85,20 +93,28 @@ class PPO(nn.Module):
             self.optimizer.step()
         
 def main():
-    env = gym.make('CartPole-v1')
-    model = PPO()
+    flag = "fix" # "fix":training  "random":playing 
+    env = gridworld_env.GridworldEnv(flag)
+    model = PPO()  
+    arguments = sys.argv
+    if len(arguments) > 1:
+        if sys.argv[1] == "continue":
+            model.load_state_dict(torch.load(".\weights\model_state_dict.pt"))  
+    print_interval = 1
     score = 0.0
-    print_interval = 20
-
-    for n_epi in range(10000):
-        s, _ = env.reset()
+    epi_num = 20000
+    for n_epi in range(epi_num):
+        s = env.reset(flag)
         done = False
         while not done:
+            if n_epi > epi_num - 10:
+                env._render()
+                time.sleep(0.1)
             for t in range(T_horizon):
                 prob = model.pi(torch.from_numpy(s).float())
                 m = Categorical(prob)
                 a = m.sample().item()
-                s_prime, r, done, truncated, info = env.step(a)
+                s_prime, r, done = env.step(a)
 
                 model.put_data((s, a, r/100.0, s_prime, prob[a].item(), done))
                 s = s_prime
@@ -111,9 +127,12 @@ def main():
 
         if n_epi%print_interval==0 and n_epi!=0:
             print("# of episode :{}, avg score : {:.1f}".format(n_epi, score/print_interval))
+            writer.add_scalar('return/episode', score/print_interval, n_epi)
             score = 0.0
 
-    env.close()
+    writer.close()
+    torch.save(model.state_dict(), ".\weights\model_state_dict.pt")
+    torch.save(model, ".\weights\model.pt")
 
 if __name__ == '__main__':
     main()
