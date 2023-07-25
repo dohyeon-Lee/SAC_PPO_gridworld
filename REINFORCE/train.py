@@ -8,11 +8,11 @@ from torch.distributions import Categorical
 import sys, os
 import time
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
-from env import gridworld_vision
+from env import gridworld_env
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 #Hyperparameters
-learning_rate = 0.0002
+learning_rate = 0.001
 gamma         = 0.98
 
 class Policy(nn.Module):
@@ -22,9 +22,9 @@ class Policy(nn.Module):
         
         # self.fc1 = nn.Linear(4, 128)
         # self.fc2 = nn.Linear(128, 2)
-        self.fc1 = nn.Linear(8, 128)
-        self.fc2 = nn.Linear(128, 256)
-        self.fc3 = nn.Linear(256, 4)
+        self.fc1 = nn.Linear(7, 128)
+        self.fc2 = nn.Linear(128,128)
+        self.fc3 = nn.Linear(128, 4)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
         
     def forward(self, x):
@@ -47,41 +47,45 @@ class Policy(nn.Module):
         self.data = []
 
 def main():
-    #env = gym.make('CartPole-v1', render_mode="human")
-    env = gridworld_vision.GridworldEnv(10,10)
+    flag = "fix" # "fix":training  "random":playing 
+    env = gridworld_env.GridworldEnv(flag)
     pi = Policy()
+    
+    arguments = sys.argv
+    if len(arguments) > 1:
+        if sys.argv[1] == "continue":
+            pi.load_state_dict(torch.load(".\weights\model_state_dict.pt"))
+    
     score = 0.0
     print_interval = 1
-    epi_num = 2100
+    epi_num = 3000
     for n_epi in range(epi_num):
 
-        s = env.reset()
-        s = np.delete(s, s.size-1)
+        s = env.reset(flag)
         done = False
         
-        while not done: # CartPole-v1 forced to terminates at 500 step.
-            if n_epi > epi_num-3:
+        while not done:
+            if n_epi > epi_num-10 :#epi_num-10:
                 env._render()
                 time.sleep(0.1)
-            #prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             prob = pi(torch.from_numpy(s).float()) # prob : 4개 공간
             m = Categorical(prob) # 4개중 하나 sampling
             a = m.sample() # a : sampling 된 action
 
-            s_prime, r, done, _ = env.step(a.item()) # a.item() : action의 숫자값 (0,1,2,3)
+            s_prime, r, done = env.step(a.item()) # a.item() : action의 숫자값 (0,1,2,3)
             pi.put_data((r,prob[a]))
-            s = np.delete(s_prime, s_prime.size-1)
+            s = s_prime
             score += r
             
         pi.train_net()
         
         if n_epi%print_interval==0 and n_epi!=0:
             print("# of episode :{}, avg score : {}".format(n_epi, score/print_interval))
-            writer.add_scalar('Loss/episode', score/print_interval, n_epi)
+            writer.add_scalar('return/episode', score/print_interval, n_epi)
             score = 0.0
     writer.close()
-    torch.save(pi.state_dict(), ".\weights\model_state_dict.pt")
-    torch.save(pi, ".\weights\model.pt")
+    torch.save(pi.state_dict(), ".\weights\model_state_dict_2.pt")
+    torch.save(pi, ".\weights\model_2.pt")
 
 
 if __name__ == '__main__':
