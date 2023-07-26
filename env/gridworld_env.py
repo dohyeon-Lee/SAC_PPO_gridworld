@@ -5,7 +5,7 @@ import io
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
 from env import gridworld_observation
-
+from env import map_generator
 UP = 0
 RIGHT = 1
 DOWN = 2
@@ -37,27 +37,29 @@ class GridworldEnv(Env):
         ################################################################
         #### make reward ###############################################
         reward = 0
-        if d == True : 
-            #reward = 1000*(self.npos/self.move_count)
-            collision_reward = 10000 - self.collision #10000/(0.01+self.collision)
+        if d == True :  # terminate
+            collision_reward = 100 - 0.1*self.collision
+            if collision_reward < 0:
+                collision_reward = 0
             reward = collision_reward
             print("# of hit wall : {}, self collision reward : {} ".format(self.collision, collision_reward))
             self.collision = 0
             self.move_count = 0
-        elif agent_condition[a] == -1 : #move
+        elif agent_condition[a] == -1 : # move
             dx = self.state[0]
             dy = self.state[1]
-            reward = -np.abs(dx)-np.abs(dy)
-            #print("distance : {}, reward : {}".format(distance, reward))
-        elif agent_condition[a] == -2 : #hit wall
+            reward = -(np.abs(dx)+np.abs(dy)) * 0.1
+            #print("move : {}".format(reward))
+        elif agent_condition[a] == -2 : # hit wall
             dx = self.state[0]
             dy = self.state[1]
-            reward = -np.abs(dx)-np.abs(dy)
+            reward = -(np.abs(dx)+np.abs(dy)) * 0.1
             reward += -10
+            #print("hit wall : {}".format(reward))
             self.collision += 1            
         self.move_count += 1
 
-        return (self.state, reward*0.01, d)
+        return (self.state, reward, d)
 
     def _render(self, mode='human', close=False):
 
@@ -112,8 +114,8 @@ class GridworldEnv(Env):
             self.MAX_X = np.random.randint(low=10,high=40)
             self.MAX_Y = np.random.randint(low=10,high=40)
         else :
-            self.MAX_X = 10
-            self.MAX_Y = 10
+            self.MAX_X = 30
+            self.MAX_Y = 30
         index_1 = [0,0]
         index_2 = [self.MAX_X-1, self.MAX_Y-1]
         index_3 = [0, self.MAX_Y-1]
@@ -162,9 +164,15 @@ class GridworldEnv(Env):
             mine_num = 50
             self.mine_index = mine_grid(mine_num, index)
             mine_num = self.mine_index.shape[0] # random으로 생성된 mine 중 시작점, 끝점과 겹치는 경우 제거했기에 mine 수 재조정
+            
+            self.mine_pos = np.zeros(mine_num)
+            for i in range(mine_num):
+                self.mine_pos[i] = self.cal_pos(self.mine_index[i],self.MAX_X)
         else : 
-            mine_num = 36
-            self.mine_index = np.zeros((mine_num,2))
+            map = map_generator.MapGenerator(self.MAX_X, self.MAX_Y)
+            self.mine_pos = map.generate_mine_pos(50)
+            # mine_num = 36
+            # self.mine_index = np.zeros((mine_num,2))
             # self.mine_index[0,:] = [1, 2]
             # self.mine_index[1,:] = [1, 4]
             # self.mine_index[2,:] = [3, 0]
@@ -198,47 +206,45 @@ class GridworldEnv(Env):
             # self.mine_index[24,:] = [4, 8]
             # self.mine_index[25,:] = [6, 9]
 
-            self.mine_index[0,:] = [1, 2] #
-            self.mine_index[1,:] = [1, 2]
-            self.mine_index[2,:] = [2, 1]
-            self.mine_index[3,:] = [2, 1] #
-            self.mine_index[4,:] = [4, 1]
-            self.mine_index[5,:] = [4, 2]
-            self.mine_index[6,:] = [5, 1]
-            self.mine_index[7,:] = [5, 2]
-            self.mine_index[8,:] = [7, 1]
-            self.mine_index[9,:] = [8, 2] #
-            self.mine_index[10,:] = [8, 2] #
-            self.mine_index[11,:] = [8, 2]
-            self.mine_index[12,:] = [1, 4]
-            self.mine_index[13,:] = [1, 5]
-            self.mine_index[14,:] = [2, 4]
-            self.mine_index[15,:] = [2, 5]
-            self.mine_index[16,:] = [4, 4]
-            self.mine_index[17,:] = [4, 5]
-            self.mine_index[18,:] = [5, 4]
-            self.mine_index[19,:] = [5, 5]
-            self.mine_index[20,:] = [7, 4]
-            self.mine_index[21,:] = [7, 5]
-            self.mine_index[22,:] = [8, 4]
-            self.mine_index[23,:] = [8, 5]
-            self.mine_index[24,:] = [1, 7]
-            self.mine_index[25,:] = [1, 7] #
-            self.mine_index[26,:] = [2, 8] #
-            self.mine_index[27,:] = [2, 8]
-            self.mine_index[28,:] = [4, 7]
-            self.mine_index[29,:] = [4, 8]
-            self.mine_index[30,:] = [5, 7]
-            self.mine_index[31,:] = [5, 8]
-            self.mine_index[32,:] = [7, 8] # 
-            self.mine_index[33,:] = [7, 8]
-            self.mine_index[34,:] = [8, 7]
-            self.mine_index[35,:] = [8, 7] #
+            # self.mine_index[0,:] = [1, 2] #
+            # self.mine_index[1,:] = [1, 2]
+            # self.mine_index[2,:] = [2, 1]
+            # self.mine_index[3,:] = [2, 1] #
+            # self.mine_index[4,:] = [4, 1]
+            # self.mine_index[5,:] = [4, 2]
+            # self.mine_index[6,:] = [5, 1]
+            # self.mine_index[7,:] = [5, 2]
+            # self.mine_index[8,:] = [7, 1]
+            # self.mine_index[9,:] = [8, 2] #
+            # self.mine_index[10,:] = [8, 2] #
+            # self.mine_index[11,:] = [8, 2]
+            # self.mine_index[12,:] = [1, 4]
+            # self.mine_index[13,:] = [1, 5]
+            # self.mine_index[14,:] = [2, 4]
+            # self.mine_index[15,:] = [2, 5]
+            # self.mine_index[16,:] = [4, 4]
+            # self.mine_index[17,:] = [4, 5]
+            # self.mine_index[18,:] = [5, 4]
+            # self.mine_index[19,:] = [5, 5]
+            # self.mine_index[20,:] = [7, 4]
+            # self.mine_index[21,:] = [7, 5]
+            # self.mine_index[22,:] = [8, 4]
+            # self.mine_index[23,:] = [8, 5]
+            # self.mine_index[24,:] = [1, 7]
+            # self.mine_index[25,:] = [1, 7] #
+            # self.mine_index[26,:] = [2, 8] #
+            # self.mine_index[27,:] = [2, 8]
+            # self.mine_index[28,:] = [4, 7]
+            # self.mine_index[29,:] = [4, 8]
+            # self.mine_index[30,:] = [5, 7]
+            # self.mine_index[31,:] = [5, 8]
+            # self.mine_index[32,:] = [7, 8] # 
+            # self.mine_index[33,:] = [7, 8]
+            # self.mine_index[34,:] = [8, 7]
+            # self.mine_index[35,:] = [8, 7] #
 
 
-        self.mine_pos = np.zeros(mine_num)
-        for i in range(mine_num):
-            self.mine_pos[i] = self.cal_pos(self.mine_index[i],self.MAX_X)
+       
 
         # mapdata : inital_pos, terminal_pos, mine_pos  
 
