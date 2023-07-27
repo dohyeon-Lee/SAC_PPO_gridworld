@@ -6,7 +6,7 @@ class MapGenerator():
         self.MAX_Y = MAX_Y
         self.mine_num = 6
     
-    def generate_mine(self, kind = "small"):
+    def generate_mine_v1(self, kind = "small"):
         if kind == "small" : 
             self.mine_size = [3,3]
         retry = 1
@@ -70,12 +70,40 @@ class MapGenerator():
         self.mine_batch = self.mine_batch[~np.all(self.mine_batch == self.mine_batch[0], axis=(1, 2))]
         self.mine_batch = self.mine_batch[~np.all(self.mine_batch == self.mine_batch[0], axis=(1, 2))]
     
+    def generate_mine_v2(self, minegrid_size = 3, hardpercent = 100):
+        # 0 1 2 | 3 4 5 | 6 7 8 | 9 10 11
+        minegrid_num_x = int(self.MAX_X / minegrid_size)
+        minegrid_num_y = int(self.MAX_Y / minegrid_size)
+
+        self.mine = []
+        for i in range(minegrid_num_x):
+            for j in range(minegrid_num_y):
+                if (i == 0 or i == minegrid_num_x-1) and (j == 0 or j == minegrid_num_y-1):
+                    continue
+                mine_x = np.linspace(i * minegrid_size, (i + 1) * minegrid_size - 1, minegrid_size)
+                mine_y = np.linspace(j * minegrid_size, (j + 1) * minegrid_size - 1, minegrid_size)
+                #print(mine_x)
+                if 0 == np.random.randint(0,2):
+                    mine_x = np.delete(mine_x,0)
+                else:
+                    mine_x = np.delete(mine_x,minegrid_size-1)
+                #print(mine_x)
+                if 0 == np.random.randint(0,2):
+                    mine_y = np.delete(mine_y,0)
+                else:
+                    mine_y = np.delete(mine_y,minegrid_size-1)
+               
+                if hardpercent >= np.random.randint(0,101):
+                    for x in mine_x:
+                        for y in mine_y:
+                            self.mine.append([x, y])
+
     def cal_pos(self, index):
         return (index[1] * self.MAX_X) + index[0]
     
-    def generate_mine_pos(self, mine_num):
+    def generate_mine_pos_v1(self, mine_num):
         self.mine_num = mine_num
-        self.generate_mine("small")
+        self.generate_mine_v1("small")
         
         mine_numsize = int(self.mine_size[0]*self.mine_size[1])
 
@@ -86,6 +114,16 @@ class MapGenerator():
                     #if ((i+1) % self.mine_size[0] != 0) and (i < (mine_numsize-self.mine_size[0])) :
                     mine_pos = self.cal_pos(mine[i])
                     self.mine_pos_batch = np.append(self.mine_pos_batch, mine_pos)
+                
+        return self.mine_pos_batch
+    
+    def generate_mine_pos_v2(self, minegrid_size=3, hardpercent=100):
+        self.generate_mine_v2(minegrid_size, hardpercent)
+
+        self.mine_pos_batch = []
+        for mine in self.mine:
+            mine_pos = self.cal_pos(mine)
+            self.mine_pos_batch = np.append(self.mine_pos_batch, mine_pos)
                 
         return self.mine_pos_batch
 
@@ -102,5 +140,5 @@ class MapGenerator():
 #     print("a와 b의 요소들은 모두 다릅니다.")
 
         
-gen = MapGenerator(30,30)
-gen.generate_mine()
+# gen = MapGenerator(30,30)
+# gen.generate_mine_v2(minegrid_size = 3, hardpercent = 100)

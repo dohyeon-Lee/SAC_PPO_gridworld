@@ -170,7 +170,7 @@ class GridworldEnv(Env):
                 self.mine_pos[i] = self.cal_pos(self.mine_index[i],self.MAX_X)
         else : 
             map = map_generator.MapGenerator(self.MAX_X, self.MAX_Y)
-            self.mine_pos = map.generate_mine_pos(50)
+            self.mine_pos = map.generate_mine_pos_v2(3,100)
             # mine_num = 36
             # self.mine_index = np.zeros((mine_num,2))
             # self.mine_index[0,:] = [1, 2]
