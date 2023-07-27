@@ -70,12 +70,13 @@ class MapGenerator():
         self.mine_batch = self.mine_batch[~np.all(self.mine_batch == self.mine_batch[0], axis=(1, 2))]
         self.mine_batch = self.mine_batch[~np.all(self.mine_batch == self.mine_batch[0], axis=(1, 2))]
     
-    def generate_mine_v2(self, minegrid_size = 3, hardpercent = 100):
+    def generate_mine_v2(self, minegrid_size = 3, hardpercent = 100, maxnum = 4):
         # 0 1 2 | 3 4 5 | 6 7 8 | 9 10 11
         minegrid_num_x = int(self.MAX_X / minegrid_size)
         minegrid_num_y = int(self.MAX_Y / minegrid_size)
 
         self.mine = []
+        count = 0
         for i in range(minegrid_num_x):
             for j in range(minegrid_num_y):
                 if (i == 0 or i == minegrid_num_x-1) and (j == 0 or j == minegrid_num_y-1):
@@ -94,6 +95,9 @@ class MapGenerator():
                     mine_y = np.delete(mine_y,minegrid_size-1)
                
                 if hardpercent >= np.random.randint(0,101):
+                    count += 1
+                    if count > maxnum:
+                        continue
                     for x in mine_x:
                         for y in mine_y:
                             self.mine.append([x, y])
@@ -117,8 +121,8 @@ class MapGenerator():
                 
         return self.mine_pos_batch
     
-    def generate_mine_pos_v2(self, minegrid_size=3, hardpercent=100):
-        self.generate_mine_v2(minegrid_size, hardpercent)
+    def generate_mine_pos_v2(self, minegrid_size=3, hardpercent=100, maxnum = 4):
+        self.generate_mine_v2(minegrid_size, hardpercent, maxnum)
 
         self.mine_pos_batch = []
         for mine in self.mine:

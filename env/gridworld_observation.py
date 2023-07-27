@@ -17,10 +17,10 @@ class Observation():
         self.vision_state = self.vision(self.pos)
         self.vision_pos = self.vision_render(self.vision_state, self.pos)
         #distance = self.cal_distance(self.pos) / np.sqrt(self.MAX_X**2 + self.MAX_Y**2) # consider map size
-        dx, dy = self.cal_distance(self.pos)
-        dx = dx / self.MAX_X # consider map size
-        dy = dy / self.MAX_Y # consider map size
-        state = np.append([dx, dy], self.vision_state)
+        # dx, dy = self.cal_distance(self.pos)
+        # dx = dx / self.MAX_X # consider map size
+        # dy = dy / self.MAX_Y # consider map size
+        state = np.append([self.lastaction*0.1, self.compass], self.vision_state)
         self.state = state
         # state : [lastaction, compass, vision]
         return self.state, self.vision_pos
@@ -32,10 +32,10 @@ class Observation():
         self.vision_state = self.vision(self.pos)
         self.vision_pos = self.vision_render(self.vision_state, self.pos)
         #distance = self.cal_distance(self.pos) / np.sqrt(self.MAX_X**2 + self.MAX_Y**2) # consider map size
-        dx, dy = self.cal_distance(self.pos)
-        dx = dx / self.MAX_X # consider map size
-        dy = dy / self.MAX_Y # consider map size
-        state = np.append([dx, dy], self.vision_state)
+        # dx, dy = self.cal_distance(self.pos)
+        # dx = dx / self.MAX_X # consider map size
+        # dy = dy / self.MAX_Y # consider map size
+        state = np.append([self.lastaction*0.1, self.compass], self.vision_state)
         self.state = state
         return self.state, self.vision_pos
 

@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
 from env import gridworld_env
 
 #Hyperparameters
-learning_rate = 0.00002
+learning_rate = 0.0002
 gamma         = 0.98
 lmbda         = 0.95
 eps_clip      = 0.1
@@ -93,7 +93,7 @@ class PPO(nn.Module):
 def main():
     flag = "fix" # "fix":training  "random":playing 
     env = gridworld_env.GridworldEnv(flag)
-    model = torch.load(".\weights\model.pt") 
+    model = torch.load(".\weights\model_1.pt") 
     print_interval = 1
     score = 0.0
     epi_num = 20000

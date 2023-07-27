@@ -3,6 +3,7 @@ from gym.utils import seeding
 import numpy as np
 import io
 import sys, os
+import time
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
 from env import gridworld_observation
 from env import map_generator
@@ -28,9 +29,11 @@ class GridworldEnv(Env):
         self.collision = 0
         self.pos = self.inital_pos # 현재 위치
         self.P = self.make_prob()
+        self.stepcount = 0
         return self.state
     
     def step(self, a): # imput : action output : next state, reward
+        self.stepcount += 1
         next_pos, agent_condition, d = self.P[self.pos][a]
         self.pos = next_pos
         self.state, self.vision_pos = self.obs.step(self.pos, a)
@@ -42,24 +45,27 @@ class GridworldEnv(Env):
             if collision_reward < 0:
                 collision_reward = 0
             reward = collision_reward
-            print("# of hit wall : {}, self collision reward : {} ".format(self.collision, collision_reward))
+            #print(self.stepcount)
+            self.stepcount = 0
+            #print("# of hit wall : {}, self collision reward : {} ".format(self.collision, collision_reward))
             self.collision = 0
             self.move_count = 0
-        elif agent_condition[a] == -1 : # move
-            dx = self.state[0]
-            dy = self.state[1]
-            reward = -(np.abs(dx)+np.abs(dy)) * 0.1
-            #print("move : {}".format(reward))
-        elif agent_condition[a] == -2 : # hit wall
-            dx = self.state[0]
-            dy = self.state[1]
-            reward = -(np.abs(dx)+np.abs(dy)) * 0.1
+        elif self.stepcount > 10000 : 
+            reward = - (self.state[1]**2)*0.1
             reward += -10
-            #print("hit wall : {}".format(reward))
+            self.stepcount = 0
+            d = True
+        elif agent_condition[a] == -1 : # move
+            reward = - (self.state[1]**2)*0.1
+
+        elif agent_condition[a] == -2 : # hit wall
+            
+            reward = - (self.state[1]**2)*0.1
+            reward += -1
             self.collision += 1            
         self.move_count += 1
 
-        return (self.state, reward, d)
+        return (self.state, reward/10, d)
 
     def _render(self, mode='human', close=False):
 
@@ -99,6 +105,7 @@ class GridworldEnv(Env):
                 outfile.write("\n")
 
             it.iternext()
+        print("angle: {}".format(self.state[1]*(180/np.pi)))
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -114,8 +121,8 @@ class GridworldEnv(Env):
             self.MAX_X = np.random.randint(low=10,high=40)
             self.MAX_Y = np.random.randint(low=10,high=40)
         else :
-            self.MAX_X = 30
-            self.MAX_Y = 30
+            self.MAX_X = 9
+            self.MAX_Y = 9
         index_1 = [0,0]
         index_2 = [self.MAX_X-1, self.MAX_Y-1]
         index_3 = [0, self.MAX_Y-1]
@@ -170,81 +177,7 @@ class GridworldEnv(Env):
                 self.mine_pos[i] = self.cal_pos(self.mine_index[i],self.MAX_X)
         else : 
             map = map_generator.MapGenerator(self.MAX_X, self.MAX_Y)
-            self.mine_pos = map.generate_mine_pos_v2(3,100)
-            # mine_num = 36
-            # self.mine_index = np.zeros((mine_num,2))
-            # self.mine_index[0,:] = [1, 2]
-            # self.mine_index[1,:] = [1, 4]
-            # self.mine_index[2,:] = [3, 0]
-            # self.mine_index[3,:] = [2, 2]
-            # self.mine_index[4,:] = [4, 3]
-      
-            # self.mine_index[0,:] = [0, 1]
-            # self.mine_index[1,:] = [1, 1]
-            # self.mine_index[2,:] = [2, 1]
-            # self.mine_index[3,:] = [2, 2]
-            # self.mine_index[4,:] = [3, 3]
-            # self.mine_index[5,:] = [4, 3]
-            # self.mine_index[6,:] = [3, 4]
-            # self.mine_index[7,:] = [6, 7]
-            # self.mine_index[8,:] = [3, 7]
-            # self.mine_index[9,:] = [9, 3]
-            # self.mine_index[10,:] = [5, 3]
-            # self.mine_index[11,:] = [1, 6]
-            # self.mine_index[12,:] = [5, 6]
-            # self.mine_index[13,:] = [7, 3]
-            # self.mine_index[14,:] = [8, 7]
-            # self.mine_index[15,:] = [2, 6]
-            # self.mine_index[16,:] = [8, 5]
-            # self.mine_index[17,:] = [8, 2]
-            # self.mine_index[18,:] = [9, 1]
-            # self.mine_index[19,:] = [6, 1]
-            # self.mine_index[20,:] = [4, 1]
-            # self.mine_index[21,:] = [4, 2]
-            # self.mine_index[22,:] = [7, 6]
-            # self.mine_index[23,:] = [4, 9]
-            # self.mine_index[24,:] = [4, 8]
-            # self.mine_index[25,:] = [6, 9]
-
-            # self.mine_index[0,:] = [1, 2] #
-            # self.mine_index[1,:] = [1, 2]
-            # self.mine_index[2,:] = [2, 1]
-            # self.mine_index[3,:] = [2, 1] #
-            # self.mine_index[4,:] = [4, 1]
-            # self.mine_index[5,:] = [4, 2]
-            # self.mine_index[6,:] = [5, 1]
-            # self.mine_index[7,:] = [5, 2]
-            # self.mine_index[8,:] = [7, 1]
-            # self.mine_index[9,:] = [8, 2] #
-            # self.mine_index[10,:] = [8, 2] #
-            # self.mine_index[11,:] = [8, 2]
-            # self.mine_index[12,:] = [1, 4]
-            # self.mine_index[13,:] = [1, 5]
-            # self.mine_index[14,:] = [2, 4]
-            # self.mine_index[15,:] = [2, 5]
-            # self.mine_index[16,:] = [4, 4]
-            # self.mine_index[17,:] = [4, 5]
-            # self.mine_index[18,:] = [5, 4]
-            # self.mine_index[19,:] = [5, 5]
-            # self.mine_index[20,:] = [7, 4]
-            # self.mine_index[21,:] = [7, 5]
-            # self.mine_index[22,:] = [8, 4]
-            # self.mine_index[23,:] = [8, 5]
-            # self.mine_index[24,:] = [1, 7]
-            # self.mine_index[25,:] = [1, 7] #
-            # self.mine_index[26,:] = [2, 8] #
-            # self.mine_index[27,:] = [2, 8]
-            # self.mine_index[28,:] = [4, 7]
-            # self.mine_index[29,:] = [4, 8]
-            # self.mine_index[30,:] = [5, 7]
-            # self.mine_index[31,:] = [5, 8]
-            # self.mine_index[32,:] = [7, 8] # 
-            # self.mine_index[33,:] = [7, 8]
-            # self.mine_index[34,:] = [8, 7]
-            # self.mine_index[35,:] = [8, 7] #
-
-
-       
+            self.mine_pos = map.generate_mine_pos_v2(minegrid_size=3, hardpercent=-90, maxnum=0)
 
         # mapdata : inital_pos, terminal_pos, mine_pos  
 
@@ -311,7 +244,10 @@ class GridworldEnv(Env):
 
 def main():
     env = GridworldEnv("fix")
-    env._render()
+    for i in range(100):
+        env.reset("fix")
+        env._render()
+        time.sleep(0.5)
     
 if __name__ == "__main__":
     main()

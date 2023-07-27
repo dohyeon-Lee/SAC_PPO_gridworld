@@ -13,7 +13,8 @@ from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 
 #Hyperparameters
-learning_rate = 0.00002
+#learning_rate = 0.00008
+learning_rate = 0.0002
 gamma         = 0.98
 lmbda         = 0.95
 eps_clip      = 0.1
@@ -97,20 +98,25 @@ def main():
     env = gridworld_env.GridworldEnv(flag)
     model = PPO()  
     arguments = sys.argv
+    global_count = 0
+    
     if len(arguments) > 1:
         if sys.argv[1] == "continue":
             model.load_state_dict(torch.load(".\weights\model_state_dict.pt"))  
     print_interval = 1
     score = 0.0
-    epi_num = 20000
+    epi_num = 10000
     for n_epi in range(epi_num):
         s = env.reset(flag)
         done = False
+        shut_down_count = 0
         while not done:
+            shut_down_count += 1
             if n_epi > epi_num - 10:
                 env._render()
-                time.sleep(0.1)
+                time.sleep(0.5)
             for t in range(T_horizon):
+                global_count += 1
                 prob = model.pi(torch.from_numpy(s).float())
                 m = Categorical(prob)
                 a = m.sample().item()
@@ -121,15 +127,19 @@ def main():
 
                 score += r
                 if done:
+                    #print(shut_down_count)
                     break
-
+            # if shut_down_count > 100 : 
+            #     break
+                
             model.train_net()
 
         if n_epi%print_interval==0 and n_epi!=0:
             print("# of episode :{}, avg score : {:.1f}".format(n_epi, score/print_interval))
-            writer.add_scalar('return/episode', score/print_interval, n_epi)
+            writer.add_scalar('return/episode', 10*score/print_interval, n_epi)
+            writer.add_scalar('global_count/episode', global_count, n_epi)
             score = 0.0
-
+    print(global_count)
     writer.close()
     torch.save(model.state_dict(), ".\weights\model_state_dict.pt")
     torch.save(model, ".\weights\model.pt")
