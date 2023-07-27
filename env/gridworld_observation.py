@@ -256,6 +256,7 @@ class Observation():
                     vision_state[3] = 1
                 elif (s + 2*self.MAX_X in self.mine_pos) :
                     vision_state[3] = 1
+
             if vision_state[1] == 1:                    # 4
                 vision_state[4] = 1
             else:                       
@@ -263,6 +264,7 @@ class Observation():
                     vision_state[4] = 1
                 elif (s - 2 in self.mine_pos):
                     vision_state[4] = 1
+
             if vision_state[2] == 1:                    # 5
                 vision_state[5] = 1
             else:
