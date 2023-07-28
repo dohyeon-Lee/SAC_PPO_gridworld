@@ -177,7 +177,7 @@ class GridworldEnv(Env):
                 self.mine_pos[i] = self.cal_pos(self.mine_index[i],self.MAX_X)
         else : 
             map = map_generator.MapGenerator(self.MAX_X, self.MAX_Y)
-            self.mine_pos = map.generate_mine_pos_v2(minegrid_size=3, hardpercent=-90, maxnum=0)
+            self.mine_pos = map.generate_mine_pos_v2(minegrid_size=3, hardpercent=70, maxnum=3)
 
         # mapdata : inital_pos, terminal_pos, mine_pos  
 

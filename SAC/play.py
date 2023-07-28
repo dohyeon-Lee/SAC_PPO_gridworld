@@ -7,13 +7,19 @@ from torch.distributions import Normal
 import numpy as np
 import collections, random
 
+import sys, os
+import time
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname("env"))))
+from env import gridworld_env
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter()
 #Hyperparameters
 lr_pi           = 0.0005
 lr_q            = 0.001
 init_alpha      = 0.01
 gamma           = 0.98
 batch_size      = 32
-buffer_limit    = 50000
+buffer_limit    = 5000
 tau             = 0.01 # for target network soft update
 target_entropy  = -1.0 # for automated alpha update
 lr_alpha        = 0.001  # for automated alpha update
@@ -48,7 +54,7 @@ class ReplayBuffer():
 class PolicyNet(nn.Module):
     def __init__(self, learning_rate):
         super(PolicyNet, self).__init__()
-        self.fc1 = nn.Linear(3, 128)
+        self.fc1 = nn.Linear(8, 128)
         self.fc_mu = nn.Linear(128,1)
         self.fc_std  = nn.Linear(128,1)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
@@ -77,7 +83,7 @@ class PolicyNet(nn.Module):
         q1_q2 = torch.cat([q1_val, q2_val], dim=1)
         min_q = torch.min(q1_q2, 1, keepdim=True)[0]
 
-        loss = -min_q - entropy # for gradient ascent
+        loss = -min_q - entropy # for gradient ascent , loss_pi , 8
         self.optimizer.zero_grad()
         loss.mean().backward()
         self.optimizer.step()
@@ -90,7 +96,7 @@ class PolicyNet(nn.Module):
 class QNet(nn.Module):
     def __init__(self, learning_rate):
         super(QNet, self).__init__()
-        self.fc_s = nn.Linear(3, 64)
+        self.fc_s = nn.Linear(8, 64)
         self.fc_a = nn.Linear(1,64)
         self.fc_cat = nn.Linear(128,32)
         self.fc_out = nn.Linear(32,1)
@@ -106,16 +112,16 @@ class QNet(nn.Module):
 
     def train_net(self, target, mini_batch):
         s, a, r, s_prime, done = mini_batch
-        loss = F.smooth_l1_loss(self.forward(s, a) , target)
+        loss = F.smooth_l1_loss(self.forward(s, a) , target) # 7
         self.optimizer.zero_grad()
         loss.mean().backward()
         self.optimizer.step()
 
-    def soft_update(self, net_target):
+    def soft_update(self, net_target): # 9
         for param_target, param in zip(net_target.parameters(), self.parameters()):
             param_target.data.copy_(param_target.data * (1.0 - tau) + param.data * tau)
 
-def calc_target(pi, q1, q2, mini_batch):
+def calc_target(pi, q1, q2, mini_batch): # 6
     s, a, r, s_prime, done = mini_batch
 
     with torch.no_grad():
@@ -129,47 +135,46 @@ def calc_target(pi, q1, q2, mini_batch):
     return target
     
 def main():
-    env = gym.make('CartPole-v1', render_mode="human")
+    flag = "fix" # "fix":training  "random":playing 
+    env = gridworld_env.GridworldEnv(flag)
     memory = ReplayBuffer()
     q1, q2, q1_target, q2_target = QNet(lr_q), QNet(lr_q), QNet(lr_q), QNet(lr_q)
-    pi = torch.load(".\weights\model_pi.pt")
+    pi = torch.load(".\weights\model_pi_mine.pt") 
 
     q1_target.load_state_dict(q1.state_dict())
     q2_target.load_state_dict(q2.state_dict())
-
+    
+    print_interval = 1
     score = 0.0
-    print_interval = 20
-
-    for n_epi in range(10000):
-        s, _ = env.reset()
+    epi_num = 1000
+    for n_epi in range(epi_num):
+        s = env.reset(flag)
         done = False
-        count = 0
-
-        while count < 200 and not done:
+        while not done:
+            env._render()
+            time.sleep(0.5)
+    
             a, log_prob= pi(torch.from_numpy(s).float())
-            s_prime, r, done, truncated, info = env.step([2.0*a.item()])
-            memory.put((s, a.item(), r/10.0, s_prime, done))
+            
+            if a.item() >= -1 and a.item() < -1/2:
+                discrete_action = 0
+            elif a.item() >= -1/2 and a.item() < 0:
+                discrete_action = 1
+            elif a.item() >= 0 and a.item() < 1/2:
+                discrete_action = 2
+            else:
+                discrete_action = 3
+            
+            s_prime, r, done = env.step(discrete_action)
             score +=r
             s = s_prime
-            count += 1
                 
-        if memory.size()>1000:
-            for i in range(20):
-                mini_batch = memory.sample(batch_size)
-                td_target = calc_target(pi, q1_target, q2_target, mini_batch)
-                q1.train_net(td_target, mini_batch)
-                q2.train_net(td_target, mini_batch)
-                entropy = pi.train_net(q1, q2, mini_batch)
-                q1.soft_update(q1_target)
-                q2.soft_update(q2_target)
                 
         if n_epi%print_interval==0 and n_epi!=0:
             print("# of episode :{}, avg score : {:.1f} alpha:{:.4f}".format(n_epi, score/print_interval, pi.log_alpha.exp()))
+            
             score = 0.0
 
-    env.close()
-    torch.save(pi.state_dict(), ".\weights\model_state_dict.pt")
-    torch.save(pi, ".\weights\model.pt")
 
 if __name__ == '__main__':
     main()

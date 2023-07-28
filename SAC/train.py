@@ -14,8 +14,8 @@ from env import gridworld_env
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 #Hyperparameters
-lr_pi           = 0.0005
-lr_q            = 0.001
+lr_pi           = 0.0001 # 0.0005
+lr_q            = 0.001  # 0.001 
 init_alpha      = 0.01
 gamma           = 0.98
 batch_size      = 32
@@ -54,9 +54,9 @@ class ReplayBuffer():
 class PolicyNet(nn.Module):
     def __init__(self, learning_rate):
         super(PolicyNet, self).__init__()
-        self.fc1 = nn.Linear(8, 128)
-        self.fc_mu = nn.Linear(128,1)
-        self.fc_std  = nn.Linear(128,1)
+        self.fc1 = nn.Linear(8, 256)
+        self.fc_mu = nn.Linear(256,1)
+        self.fc_std  = nn.Linear(256,1)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
         self.log_alpha = torch.tensor(np.log(init_alpha))
@@ -96,10 +96,10 @@ class PolicyNet(nn.Module):
 class QNet(nn.Module):
     def __init__(self, learning_rate):
         super(QNet, self).__init__()
-        self.fc_s = nn.Linear(8, 64)
-        self.fc_a = nn.Linear(1,64)
-        self.fc_cat = nn.Linear(128,32)
-        self.fc_out = nn.Linear(32,1)
+        self.fc_s = nn.Linear(8, 128)
+        self.fc_a = nn.Linear(1,128)
+        self.fc_cat = nn.Linear(256,64)
+        self.fc_out = nn.Linear(64,1)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
     def forward(self, x, a):
@@ -140,19 +140,22 @@ def main():
     memory = ReplayBuffer()
     q1, q2, q1_target, q2_target = QNet(lr_q), QNet(lr_q), QNet(lr_q), QNet(lr_q)
     pi = PolicyNet(lr_pi)
-
-    q1_target.load_state_dict(q1.state_dict())
-    q2_target.load_state_dict(q2.state_dict())
     arguments = sys.argv
 
     global_count = 0
         
     if len(arguments) > 1:
         if sys.argv[1] == "continue":
-            pi.load_state_dict(torch.load(".\weights\model_state_dict.pt"))  
+            pi.load_state_dict(torch.load(".\weights\model_state_dict_pi_mine.pt"))  
+            q1.load_state_dict(torch.load(".\weights\model_state_dict_pi_mine.pt"))  
+            q2.load_state_dict(torch.load(".\weights\model_state_dict_pi_mine.pt"))  
+    
+    q1_target.load_state_dict(q1.state_dict())
+    q2_target.load_state_dict(q2.state_dict())
+
     print_interval = 1
     score = 0.0
-    epi_num = 1000
+    epi_num = 3000
     for n_epi in range(epi_num):
         s = env.reset(flag)
         done = False
@@ -196,8 +199,10 @@ def main():
             score = 0.0
     print(global_count)
     writer.close()
-    torch.save(pi.state_dict(), ".\weights\model_state_dict_pi.pt")
-    torch.save(pi, ".\weights\model_pi.pt")
+    torch.save(pi.state_dict(), ".\weights\model_state_dict_pi_mine.pt")
+    torch.save(q1.state_dict(), ".\weights\model_state_dict_q1_mine.pt")
+    torch.save(q2.state_dict(), ".\weights\model_state_dict_q2_mine.pt")
+    torch.save(pi, ".\weights\model_pi_mine.pt")
 
 if __name__ == '__main__':
     main()
